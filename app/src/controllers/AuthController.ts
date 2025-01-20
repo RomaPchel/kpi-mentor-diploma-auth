@@ -1,8 +1,7 @@
 import Router from "koa-router";
 import {Context} from "koa";
-import {RegistrationRequestBody} from "../interfaces/AuthInterfaces";
-import {z, ZodError} from "zod";
-import {AuthenticationUtil} from "../Utils/AuthenticationUtil";
+import {LoginRequestBody, RegistrationRequestBody} from "../interfaces/AuthInterfaces.js";
+import {AuthenticationUtil} from "../Utils/AuthenticationUtil.js";
 
 export class AuthController extends Router {
     constructor() {
@@ -16,7 +15,11 @@ export class AuthController extends Router {
     }
 
     private async login(ctx: Context){
+        const body: LoginRequestBody = ctx.request.body as LoginRequestBody;
 
+
+        ctx.body = await AuthenticationUtil.login(body)
+        ctx.status = 201
     }
 
     private async registration(ctx: Context){

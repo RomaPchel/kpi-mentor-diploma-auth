@@ -1,4 +1,4 @@
-import {RegistrationRequestBody} from "../interfaces/AuthInterfaces";
+import {RegistrationRequestBody} from "../interfaces/AuthInterfaces.js";
 import {z} from "zod";
 import {Request} from "koa";
 export class Validator {
