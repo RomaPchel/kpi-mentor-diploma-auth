@@ -1,16 +1,15 @@
-import { Entity, ManyToOne, Property } from '@mikro-orm/core';
-import {BaseEntity} from "./BaseEntity.js";
-import { User } from './User.js';
+import { Entity, ManyToOne, Property } from "@mikro-orm/core";
+import { BaseEntity } from "./BaseEntity.js";
+import { User } from "./User.js";
 
 @Entity()
-export class MentorStudent extends BaseEntity{
+export class MentorStudent extends BaseEntity {
+  @ManyToOne(() => User)
+  mentor!: User;
 
-    @ManyToOne(() => User)
-    mentor!: User;
+  @ManyToOne(() => User)
+  student!: User;
 
-    @ManyToOne(() => User)
-    student!: User;
-
-    @Property({ nullable: true })
-    relationshipDetails?: string;
+  @Property({ nullable: true })
+  relationshipDetails?: string;
 }

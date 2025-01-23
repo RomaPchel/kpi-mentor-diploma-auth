@@ -1,22 +1,22 @@
 {
-    "$schema": "https://json.schemastore.org/swcrc",
-    "sourceMaps": true,
-    "jsc": {
-        "baseUrl": "./src",
-        "parser": {
-            "syntax": "typescript",
-            "dynamicImport": true,
-            "topLevelAwait": true,
-            "decorators": true
-        },
-        "target": "es2022",
-        "paths": {
-            "@src/*": ["./*"],
-            "@lib/*": ["./lib/*"],
-            "@controllers/*": ["./controllers/*"]
-        }
+  "$schema": "https://json.schemastore.org/swcrc",
+  "sourceMaps": true,
+  "jsc": {
+    "baseUrl": "./src",
+    "parser": {
+      "syntax": "typescript",
+      "dynamicImport": true,
+      "topLevelAwait": true,
+      "decorators": true
     },
-    "module": {
-        "type": "es6"
+    "target": "es2022",
+    "paths": {
+      "@src/*": ["./*"],
+      "@lib/*": ["./lib/*"],
+      "@controllers/*": ["./controllers/*"]
     }
+  },
+  "module": {
+    "type": "es6"
+  }
 }

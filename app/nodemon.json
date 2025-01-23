@@ -2,4 +2,5 @@
   "watch": ["src"],
   "ignore": ["node_modules", ".git"],
   "ext": "ts",
-  "exec": "npm run build && pnpm start"}
+  "exec": "pnpm build && pnpm start"
+}

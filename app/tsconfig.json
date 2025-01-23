@@ -28,5 +28,4 @@
     "resolveJsonModule": true
   },
   "include": ["src"]
-
 }

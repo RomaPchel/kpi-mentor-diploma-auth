@@ -1,17 +1,15 @@
-import {OptionalProps, PrimaryKey, Property} from '@mikro-orm/core';
-import {v4} from "uuid";
+import { OptionalProps, PrimaryKey, Property } from "@mikro-orm/core";
+import { v4 } from "uuid";
 
 export abstract class BaseEntity {
+  [OptionalProps]?: "createdAt" | "updatedAt";
 
-    [OptionalProps]?: 'createdAt' | 'updatedAt';
+  @PrimaryKey()
+  uuid: string = v4();
 
-    @PrimaryKey()
-    uuid: string = v4();
+  @Property()
+  createdAt = new Date();
 
-    @Property()
-    createdAt = new Date();
-
-    @Property({ onUpdate: () => new Date() })
-    updatedAt = new Date();
-
+  @Property({ onUpdate: () => new Date() })
+  updatedAt = new Date();
 }
