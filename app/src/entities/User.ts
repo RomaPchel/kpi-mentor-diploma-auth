@@ -1,13 +1,10 @@
-import {Entity, PrimaryKey, Property, Enum, BeforeCreate} from '@mikro-orm/core';
-import { v4 } from 'uuid';
+import {Entity, Property, Enum, BeforeCreate} from '@mikro-orm/core';
 import {UserRole} from "../enums/UserEnums.js";
 import bcrypt from "bcrypt";
+import {BaseEntity} from "./BaseEntity.js";
 
 @Entity()
-export class User {
-    @PrimaryKey()
-    uuid: string = v4();
-
+export class User extends BaseEntity{
     @Property()
     firstName!: string;
 
@@ -29,8 +26,6 @@ export class User {
     @Property({ type: 'text', nullable: true })
     bio?: string;
 
-    @Property({ onCreate: () => new Date() })
-    createdAt: Date = new Date();
 
     @BeforeCreate()
     async hashPassword() {

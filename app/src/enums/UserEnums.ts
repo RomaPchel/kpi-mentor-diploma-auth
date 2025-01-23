@@ -2,6 +2,7 @@
 export enum UserRole {
     MENTOR = 'mentor',
     STUDENT = 'student',
+    ADMIN = 'admin',
 }
 
 export enum TokenExpiration {

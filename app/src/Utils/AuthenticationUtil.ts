@@ -1,4 +1,4 @@
-import {CleanedUser, LoginRequestBody, RegistrationRequestBody, TokenSet} from "../interfaces/AuthInterfaces";
+import type {CleanedUser, LoginRequestBody, RegistrationRequestBody, TokenSet} from "../interfaces/AuthInterfaces";
 import {User} from "../entities/User.js";
 import {em} from "../db/config.js";
 import {compare} from "bcrypt";

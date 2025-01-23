@@ -1,6 +1,6 @@
 import Router from "koa-router";
-import {Context} from "koa";
-import {LoginRequestBody, RegistrationRequestBody} from "../interfaces/AuthInterfaces.js";
+import type {Context} from "koa";
+import type {LoginRequestBody, RegistrationRequestBody} from "../interfaces/AuthInterfaces.js";
 import {AuthenticationUtil} from "../Utils/AuthenticationUtil.js";
 
 export class AuthController extends Router {

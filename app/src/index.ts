@@ -11,7 +11,6 @@ await orm.connect().then(() => {
     console.log("Database has connected!");
 });
 
-// await orm.schema.refreshDatabase()
 app.use(koabodyparser());
 app.use(ValidationMiddleware());
 app.use(ErrorMiddleware());

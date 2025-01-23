@@ -1,4 +1,4 @@
-import { Context, Next } from "koa";
+import type {Context, Next} from "koa";
 import { ZodError } from "zod";
 import {Validator} from "../Utils/Validator.js";
 

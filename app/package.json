@@ -5,10 +5,11 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "npx swc --strip-leading-paths --config-file .swcrc ./src -d dist",
+		"docker:up": "docker compose -f ../docker/compose.yaml up -d",
 		"generate:dts": "tsc --emitDeclarationOnly --outDir dist",
 		"build:all": "npm run build && npm run generate:dts",
 		"start": "node --env-file .env --experimental-specifier-resolution=node dist/index.js",
-		"watch": "npx nodemon --config ./nodemon.json",
+		"watch": "pnpm docker:up & npx nodemon --config ./nodemon.json",
 		"start:dev": "npm run watch"
 	},
 	"dependencies": {
