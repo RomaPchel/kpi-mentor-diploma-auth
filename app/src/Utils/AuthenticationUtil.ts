@@ -7,7 +7,7 @@ import type {
 import { User } from "../entities/User.js";
 import { em } from "../db/config.js";
 import { compare } from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
 import { TokenExpiration } from "../enums/UserEnums.js";
 
 export class AuthenticationUtil {
@@ -31,9 +31,35 @@ export class AuthenticationUtil {
     newUser.firstName = body.firstName;
     newUser.lastName = body.lastName;
     newUser.email = body.email;
-    newUser.password = body.password; //hashed before creating
+    newUser.password = body.password; //hashed before creating via @BeforeCreate
 
     await em.persist(newUser).flush();
+  }
+
+  public static verifyRefreshToken(refreshToken: string) {
+    return new Promise<string | null | false>((resolve, reject) => {
+      jwt.verify(
+        refreshToken,
+        this.REFRESH_SECRET,
+        async (
+          err: VerifyErrors | null,
+          user: JwtPayload | string | undefined,
+        ) => {
+          if (err) {
+            reject(err);
+          }
+
+          if (user === undefined) {
+            resolve(null);
+            return;
+          }
+
+          const newAccessToken = this.signAccessToken(user as CleanedUser);
+
+          resolve(newAccessToken);
+        },
+      );
+    });
   }
 
   public static async login(body: LoginRequestBody) {
@@ -50,6 +76,18 @@ export class AuthenticationUtil {
     }
 
     return this.buildTokens(existingUser as User);
+  }
+
+  public static async getUserDetails(userUuid: string) {
+    const user: User | null = await em.findOne(User, {
+      uuid: userUuid,
+    });
+
+    if (!user) {
+      throw new Error(`User does not exist`);
+    }
+
+    return user;
   }
 
   public static signAccessToken(cleanedUser: CleanedUser) {
@@ -77,5 +115,63 @@ export class AuthenticationUtil {
     const refreshToken: string = this.singRefreshToken(cleanedUser);
 
     return { accessToken, refreshToken };
+  }
+
+  public static async fetchUserWithTokenInfo(
+    token: string,
+  ): Promise<User | null> {
+    const userInToken: User | null | false =
+      await AuthenticationUtil.verifyTokenAndFetchUser(token);
+    if (
+      userInToken === null ||
+      !userInToken ||
+      !userInToken.uuid ||
+      !userInToken.uuid
+    ) {
+      return null;
+    }
+
+    return userInToken;
+  }
+
+  public static verifyTokenAndFetchUser(
+    token: string,
+  ): Promise<User | null | false> {
+    return new Promise<User | null | false>((resolve, reject) => {
+      jwt.verify(
+        token,
+        this.ACCESS_SECRET,
+        (
+          err: VerifyErrors | null,
+          decoded: JwtPayload | string | undefined,
+        ) => {
+          if (err) {
+            reject(err);
+          }
+
+          if (decoded === undefined) {
+            resolve(null);
+            return;
+          }
+
+          const user: CleanedUser = <CleanedUser>decoded;
+
+          if (!user.uuid) {
+            resolve(false);
+            return;
+          }
+
+          em.findOne(User, {
+            uuid: user.uuid,
+          })
+            .then((persistedUser: User | null) => {
+              resolve(persistedUser);
+            })
+            .catch((e: Error) => {
+              reject(e);
+            });
+        },
+      );
+    });
   }
 }

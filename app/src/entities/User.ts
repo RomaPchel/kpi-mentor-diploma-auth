@@ -1,7 +1,15 @@
-import { Entity, Property, Enum, BeforeCreate } from "@mikro-orm/core";
+import {
+  Entity,
+  Property,
+  Enum,
+  BeforeCreate,
+  Collection,
+  OneToMany,
+} from "@mikro-orm/core";
 import { UserRole } from "../enums/UserEnums.js";
 import bcrypt from "bcrypt";
 import { BaseEntity } from "./BaseEntity.js";
+import { UserChat } from "./UserChat.js";
 
 @Entity()
 export class User extends BaseEntity {
@@ -19,6 +27,9 @@ export class User extends BaseEntity {
 
   @Enum(() => UserRole)
   role: UserRole = UserRole.STUDENT;
+
+  @OneToMany(() => UserChat, (userChat) => userChat.user)
+  userChats = new Collection<UserChat>(this);
 
   @Property({ nullable: true })
   avatar?: string;

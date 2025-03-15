@@ -10,6 +10,13 @@ export interface LoginRequestBody {
   password: string;
 }
 
+export interface HelpRequest {
+  email: string;
+  firstName: string;
+  usersOrganizationName: string;
+  currentChapter: string;
+}
+
 export interface TokenSet {
   accessToken: string;
   refreshToken: string;
