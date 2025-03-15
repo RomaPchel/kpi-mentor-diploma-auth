@@ -1,6 +1,6 @@
 import { Entity, ManyToOne, Property } from "@mikro-orm/core";
-import { User } from "./User";
-import { Chat } from "./Chat";
+import { User } from "./User.js";
+import { Chat } from "./Chat.js";
 import { BaseEntity } from "./BaseEntity.js";
 
 @Entity()
