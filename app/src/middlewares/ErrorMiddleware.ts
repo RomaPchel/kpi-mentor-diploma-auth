@@ -6,6 +6,7 @@ export const ErrorMiddleware = () => {
     try {
       await next();
     } catch (e) {
+      console.error(e);
       if (e instanceof ZodError) {
         ctx.status = 400;
         ctx.body = {

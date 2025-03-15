@@ -14,3 +14,9 @@ export enum TokenExpiration {
   ACCESS = 60 * 60,
   REFRESH = 356 * 24 * 60 * 60,
 }
+
+export enum MentorRequestStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+}

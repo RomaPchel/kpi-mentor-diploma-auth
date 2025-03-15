@@ -28,6 +28,8 @@ export class AuthenticationUtil {
 
     const newUser: User = new User();
 
+    console.log(body);
+
     newUser.firstName = body.firstName;
     newUser.lastName = body.lastName;
     newUser.email = body.email;
@@ -78,16 +80,17 @@ export class AuthenticationUtil {
     return this.buildTokens(existingUser as User);
   }
 
-  public static async getUserDetails(userUuid: string) {
-    const user: User | null = await em.findOne(User, {
-      uuid: userUuid,
-    });
-
-    if (!user) {
-      throw new Error(`User does not exist`);
-    }
-
-    return user;
+  public static async convertPersistedToUser(
+    persistedUser: JwtPayload,
+  ): Promise<CleanedUser> {
+    return {
+      uuid: persistedUser.userUuid,
+      email: persistedUser.email,
+      firstName: persistedUser.firstName ?? "firstName",
+      lastName: persistedUser.lastName ?? "lastName",
+      avatar: persistedUser.avatar,
+      role: "default",
+    };
   }
 
   public static signAccessToken(cleanedUser: CleanedUser) {
@@ -130,7 +133,6 @@ export class AuthenticationUtil {
     ) {
       return null;
     }
-
     return userInToken;
   }
 
@@ -154,7 +156,7 @@ export class AuthenticationUtil {
             return;
           }
 
-          const user: CleanedUser = <CleanedUser>decoded;
+          const user = decoded as JwtPayload;
 
           if (!user.uuid) {
             resolve(false);

@@ -1,7 +1,7 @@
 import { Entity, ManyToOne, Property } from "@mikro-orm/core";
-import { BaseEntity } from "./BaseEntity.js";
+import { BaseEntity } from "../BaseEntity.js";
 import { Chat } from "./Chat.js";
-import { User } from "./User.js";
+import { User } from "../User.js";
 
 @Entity()
 export class ChatMessage extends BaseEntity {

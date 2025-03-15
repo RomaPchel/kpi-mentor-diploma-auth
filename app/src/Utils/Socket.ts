@@ -2,9 +2,9 @@ import { Server as HTTPServer } from "http";
 import { Server, Socket } from "socket.io";
 import { EntityManager } from "@mikro-orm/core";
 import { User } from "../entities/User.js";
-import { ChatMessage } from "../entities/ChatMessage.js";
-import { Chat } from "entities/Chat.js";
-import { UserChat } from "../entities/UserChat.js";
+import { ChatMessage } from "../entities/chat/ChatMessage.js";
+import { Chat } from "entities/chat/Chat.js";
+import { UserChat } from "../entities/chat/UserChat.js";
 
 export default class SocketSingleton {
   private static instance: SocketSingleton;

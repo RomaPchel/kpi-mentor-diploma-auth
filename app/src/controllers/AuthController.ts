@@ -5,11 +5,11 @@ import type {
   RegistrationRequestBody,
 } from "../interfaces/AuthInterfaces.js";
 import { AuthenticationUtil } from "../Utils/AuthenticationUtil.js";
-import type { User } from "../entities/User";
+import type { User } from "../entities/User.js";
 
 export class AuthController extends Router {
   constructor() {
-    super();
+    super({ prefix: "/api/auth" });
     this.setUpRoutes();
   }
 
@@ -22,21 +22,20 @@ export class AuthController extends Router {
 
   private async me(ctx: Context) {
     const user: User = ctx.state.user as User;
-    console.log(user);
-    ctx.body = await AuthenticationUtil.getUserDetails(user.uuid);
+
+    ctx.body = await AuthenticationUtil.convertPersistedToUser(user);
     ctx.status = 200;
   }
 
   private async login(ctx: Context) {
     const body: LoginRequestBody = ctx.request.body as LoginRequestBody;
-    console.log(await AuthenticationUtil.login(body));
     ctx.body = await AuthenticationUtil.login(body);
     ctx.status = 200;
   }
 
   private async refresh(ctx: Context) {
     const { refreshToken } = ctx.params;
-    console.log(refreshToken);
+
     const token: string | false | null =
       await AuthenticationUtil.verifyRefreshToken(refreshToken);
     ctx.body = { accessToken: token };
