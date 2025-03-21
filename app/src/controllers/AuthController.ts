@@ -6,6 +6,7 @@ import type {
 } from "../interfaces/AuthInterfaces.js";
 import { AuthenticationUtil } from "../Utils/AuthenticationUtil.js";
 import type { User } from "../entities/User.js";
+import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 
 export class AuthController extends Router {
   constructor() {
@@ -16,7 +17,7 @@ export class AuthController extends Router {
   private setUpRoutes() {
     this.post("/login", this.login);
     this.post("/register", this.registration);
-    this.get("/me", this.me);
+    this.get("/me", AuthMiddleware(), this.me);
     this.get("/refresh", this.refresh);
   }
 

@@ -84,7 +84,7 @@ export class AuthenticationUtil {
     persistedUser: JwtPayload,
   ): Promise<CleanedUser> {
     return {
-      uuid: persistedUser.userUuid,
+      uuid: persistedUser.uuid,
       email: persistedUser.email,
       firstName: persistedUser.firstName ?? "firstName",
       lastName: persistedUser.lastName ?? "lastName",

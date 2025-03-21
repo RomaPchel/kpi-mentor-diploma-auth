@@ -21,6 +21,14 @@ export const BecomeMentorRequestSchema = z.object({
     .min(32, { message: "Motivation should be at least 32 characters long" }),
 });
 
+export const UUIDParamSchema = z.object({
+  chatId: z.string().uuid({ message: "Invalid chat ID format" }),
+});
+
+export const MentorRequestParamSchema = z.object({
+  id: z.string().uuid({ message: "Invalid request ID format" }),
+});
+
 export type RegistrationRequestBody = z.infer<typeof RegistrationRequestSchema>;
 
 export class Validator {
@@ -36,7 +44,29 @@ export class Validator {
         BecomeMentorRequestSchema.parse(request.body);
         break;
       default:
-        throw new Error(`No validation defined for ${request.url}`);
+        if (Object.keys(request.body || {}).length > 0) {
+          console.warn(`No body validation defined for ${request.url}`);
+        }
+    }
+  }
+
+  public static validateParams(
+    url: string,
+    params: Record<string, string>,
+  ): void {
+    const urlPattern = url.replace(
+      /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(\/|$)/g,
+      "/:id$1",
+    );
+
+    console.log(`Validating params for pattern: ${urlPattern}`);
+
+    if (url.match(/^\/api\/chat\/[^/]+$/)) {
+      UUIDParamSchema.parse(params);
+    } else if (url.match(/^\/api\/chat\/[^/]+\/read$/)) {
+      UUIDParamSchema.parse(params);
+    } else if (url.match(/^\/api\/user\/become-mentor-request\/[^/]+$/)) {
+      MentorRequestParamSchema.parse(params);
     }
   }
 }
