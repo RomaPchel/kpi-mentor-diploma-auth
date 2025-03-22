@@ -1,20 +1,18 @@
 import { Server as HTTPServer } from "http";
 import { Server, Socket } from "socket.io";
-import { EntityManager } from "@mikro-orm/core";
 import { User } from "../entities/User.js";
-import { ChatMessage } from "../entities/ChatMessage.js";
-import { Chat } from "entities/Chat.js";
-import { UserChat } from "../entities/UserChat.js";
+import { ChatMessage } from "../entities/chat/ChatMessage.js";
+import { Chat } from "entities/chat/Chat.js";
+import { UserChat } from "../entities/chat/UserChat.js";
+import { em } from "../db/config.js";
 
 export default class SocketSingleton {
   private static instance: SocketSingleton;
   private io: Server;
-  private em: EntityManager;
   private userSocketMap: Map<string, string> = new Map();
 
-  private constructor(server: HTTPServer, em: EntityManager) {
+  private constructor(server: HTTPServer) {
     this.io = new Server(server);
-    this.em = em;
 
     this.io.on("connection", (socket: Socket) => {
       console.log(`Socket connected: ${socket.id}`);
@@ -34,8 +32,8 @@ export default class SocketSingleton {
           content: string;
         }) => {
           try {
-            const sender = await this.em.findOne(User, { uuid: data.senderId });
-            const recipient = await this.em.findOne(User, {
+            const sender = await em.findOne(User, { uuid: data.senderId });
+            const recipient = await em.findOne(User, {
               uuid: data.recipientId,
             });
             if (!sender || !recipient) {
@@ -46,7 +44,7 @@ export default class SocketSingleton {
             const chat = await this.getOrCreatePrivateChat(sender, recipient);
 
             const chatMessage = new ChatMessage(sender, chat, data.content);
-            await this.em.persistAndFlush(chatMessage);
+            await em.persistAndFlush(chatMessage);
 
             const recipientSocketId = this.userSocketMap.get(recipient.uuid);
             if (recipientSocketId) {
@@ -96,28 +94,25 @@ export default class SocketSingleton {
       recipient.uuid,
     );
 
-    let chat = await this.em.findOne(Chat, { privateName });
+    let chat = await em.findOne(Chat, { privateName });
     if (!chat) {
       chat = new Chat(privateName);
-      this.em.persist(chat);
+      em.persist(chat);
 
       const senderUserChat = new UserChat(sender, chat);
       const recipientUserChat = new UserChat(recipient, chat);
 
-      this.em.persist(senderUserChat);
-      this.em.persist(recipientUserChat);
+      em.persist(senderUserChat);
+      em.persist(recipientUserChat);
 
-      await this.em.flush();
+      await em.flush();
     }
     return chat;
   }
 
-  public static getInstance(
-    server: HTTPServer,
-    em: EntityManager,
-  ): SocketSingleton {
+  public static getInstance(server: HTTPServer): SocketSingleton {
     if (!SocketSingleton.instance) {
-      SocketSingleton.instance = new SocketSingleton(server, em);
+      SocketSingleton.instance = new SocketSingleton(server);
     }
     return SocketSingleton.instance;
   }

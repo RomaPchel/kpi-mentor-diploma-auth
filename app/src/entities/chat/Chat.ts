@@ -1,6 +1,6 @@
 import { Entity, Collection, OneToMany, Property } from "@mikro-orm/core";
 import { ChatMessage } from "./ChatMessage.js";
-import { BaseEntity } from "./BaseEntity.js";
+import { BaseEntity } from "../BaseEntity.js";
 import { UserChat } from "./UserChat.js";
 
 @Entity()

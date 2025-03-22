@@ -25,5 +25,8 @@ export interface TokenSet {
 export interface CleanedUser {
   uuid: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  avatar: string;
   role: string;
 }

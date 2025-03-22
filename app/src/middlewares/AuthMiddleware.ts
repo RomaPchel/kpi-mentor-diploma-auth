@@ -1,16 +1,15 @@
 import type Application from "koa";
 import type { Context, Middleware, Next } from "koa";
 import jwt from "jsonwebtoken";
-import { AuthenticationUtil } from "../Utils/AuthenticationUtil.js";
 import type { User } from "../entities/User.js";
+import { AuthenticationUtil } from "../Utils/AuthenticationUtil.js";
 
 export const AuthMiddleware: () => Application.Middleware<
   Application.DefaultState,
   Application.DefaultContext
 > = (): Middleware => {
   return async (ctx: Context, next: Next) => {
-    const excludedEndpoints: string[] = ["/login"];
-
+    const excludedEndpoints: string[] = [];
     if (excludedEndpoints.some((endpoint) => ctx.path.includes(endpoint))) {
       await next();
       return;
@@ -19,6 +18,7 @@ export const AuthMiddleware: () => Application.Middleware<
 
     if (!token) {
       ctx.status = 401;
+      console.log("No token provided");
       return;
     }
 

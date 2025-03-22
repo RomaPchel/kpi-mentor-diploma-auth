@@ -9,7 +9,7 @@ import {
 import { UserRole } from "../enums/UserEnums.js";
 import bcrypt from "bcrypt";
 import { BaseEntity } from "./BaseEntity.js";
-import { UserChat } from "./UserChat.js";
+import { UserChat } from "./chat/UserChat.js";
 
 @Entity()
 export class User extends BaseEntity {

@@ -20,7 +20,7 @@ export const ValidationMiddleware = () => {
         };
       } else {
         ctx.status = 500;
-        ctx.body = { message: "Internal server error" };
+        ctx.body = { message: (e as Error).message };
       }
     }
   };
