@@ -65,6 +65,9 @@ export class Validator {
       UUIDParamSchema.parse(params);
     } else if (url.match(/^\/api\/chat\/[^/]+\/read$/)) {
       UUIDParamSchema.parse(params);
+    } else if (url.match(/^\/api\/auth\/refresh\/[^/]+$/)) {
+      console.log("here");
+      UUIDParamSchema.parse(params);
     } else if (url.match(/^\/api\/user\/become-mentor-request\/[^/]+$/)) {
       MentorRequestParamSchema.parse(params);
     }

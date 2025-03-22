@@ -18,7 +18,7 @@ export class AuthController extends Router {
     this.post("/login", this.login);
     this.post("/register", this.registration);
     this.get("/me", AuthMiddleware(), this.me);
-    this.get("/refresh", this.refresh);
+    this.get("/refresh/:refreshToken", this.refresh);
   }
 
   private async me(ctx: Context) {
@@ -29,18 +29,24 @@ export class AuthController extends Router {
   }
 
   private async login(ctx: Context) {
+    console.log(ctx.request.body);
     const body: LoginRequestBody = ctx.request.body as LoginRequestBody;
     ctx.body = await AuthenticationUtil.login(body);
     ctx.status = 200;
   }
 
   private async refresh(ctx: Context) {
-    const { refreshToken } = ctx.params;
+    console.log("Refreshing user...");
+    try {
+      const { refreshToken } = ctx.params;
 
-    const token: string | false | null =
-      await AuthenticationUtil.verifyRefreshToken(refreshToken);
-    ctx.body = { accessToken: token };
-    ctx.status = 200;
+      const token: string | false | null =
+        await AuthenticationUtil.verifyRefreshToken(refreshToken);
+      ctx.body = { accessToken: token };
+      ctx.status = 200;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private async registration(ctx: Context) {
