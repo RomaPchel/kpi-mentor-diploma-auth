@@ -9,6 +9,7 @@ import { ValidationMiddleware } from "./middlewares/ValidationMiddleware.js";
 import { UserController } from "./controllers/UserController.js";
 import { ErrorMiddleware } from "./middlewares/ErrorMiddleware.js";
 import { ChatController } from "./controllers/ChatController.js";
+import { EventController } from "./controllers/EventController.js";
 
 const app = new Koa();
 const server: HTTPServer = createServer(app.callback());
@@ -47,8 +48,12 @@ app
 app
   .use(new ChatController().routes())
   .use(new ChatController().allowedMethods());
+app
+  .use(new EventController().routes())
+  .use(new EventController().allowedMethods());
 
 // Start the server and log the port
 server.listen(3000, () => {
   console.log(`Auth server is running on port 3000`);
 });
+await orm.getSchemaGenerator().updateSchema()

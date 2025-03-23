@@ -4,12 +4,13 @@ import {
   Enum,
   BeforeCreate,
   Collection,
-  OneToMany,
+  OneToMany, ManyToMany
 } from "@mikro-orm/core";
 import { UserRole } from "../enums/UserEnums.js";
 import bcrypt from "bcrypt";
 import { BaseEntity } from "./BaseEntity.js";
 import { UserChat } from "./chat/UserChat.js";
+import { Event } from "./Event.js";
 
 @Entity()
 export class User extends BaseEntity {
@@ -36,6 +37,9 @@ export class User extends BaseEntity {
 
   @Property({ type: "text", nullable: true })
   bio?: string;
+
+  @ManyToMany(() => Event)
+  events = new Collection<Event>(this);
 
   @BeforeCreate()
   async hashPassword() {

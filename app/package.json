@@ -19,6 +19,8 @@
     "@mikro-orm/core": "^6.4.3",
     "@mikro-orm/postgresql": "^6.4.3",
     "@mikro-orm/reflection": "^6.4.3",
+    "class-validator": "^0.14.1",
+    "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
     "kpi-diploma-typescript-core": "1.0.2",
     "socket.io": "^4.8.1",
@@ -31,9 +33,9 @@
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/koa": "^2.13.5",
+    "@types/koa__cors": "^5.0.0",
     "@types/koa-bodyparser": "^4.3.12",
     "@types/koa-router": "^7.4.4",
-    "@types/koa__cors": "^5.0.0",
     "bcrypt": "^5.1.1",
     "koa": "^2.13.4",
     "koa-body": "^6.0.1",
@@ -42,5 +44,6 @@
     "koa-router": "^13.0.1",
     "prettier": "3.4.2",
     "typescript": "^5.7.3"
-  }
+  },
+  "watch": "pnpm build:all && pnpm docker:up & npx nodemon --config ./nodemon.json"
 }
