@@ -80,8 +80,10 @@ export default class SocketSingleton {
               recipient,
             );
 
+            console.log(sender, chat, data.content);
             const chatMessage = new ChatMessage(sender, chat, data.content);
-            em.create(ChatMessage, chatMessage);
+            const message = em.create(ChatMessage, chatMessage);
+            await em.persistAndFlush(message);
 
             console.log("Updated userSocketMap:", this.userSocketMap);
             // Get the set of socket IDs for the recipient
@@ -89,9 +91,10 @@ export default class SocketSingleton {
             if (recipientSocketSet && recipientSocketSet.size > 0) {
               // Emit to each socket the recipient has open
               for (const recipientSocketId of recipientSocketSet) {
-                this.io.to(recipientSocketId).emit("message", {
+                console.log("sending message");
+                this.io.to(recipientSocketId).emit("chat:message", {
                   uuid: chatMessage.uuid,
-                  senderId: sender.uuid,
+                  sender: { uuid: sender.uuid },
                   recipientId: recipient.uuid,
                   content: chatMessage.content,
                   createdAt: chatMessage.createdAt,
@@ -126,9 +129,6 @@ export default class SocketSingleton {
     });
   }
 
-  /**
-   * Helper method to add a socket id to a user's set.
-   */
   private addSocketForUser(userId: string, socketId: string): void {
     if (this.userSocketMap.has(userId)) {
       this.userSocketMap.get(userId)?.add(socketId);
