@@ -9,7 +9,8 @@ import { em } from "../db/config.js";
 export default class SocketSingleton {
   private static instance: SocketSingleton;
   private io: Server;
-  private userSocketMap: Map<string, string> = new Map();
+  // Updated map: userId => Set of socket ids
+  private userSocketMap: Map<string, Set<string>> = new Map();
 
   private constructor(server: HTTPServer) {
     this.io = new Server(server, {
@@ -26,14 +27,16 @@ export default class SocketSingleton {
       // If client provided userId in handshake auth, add immediately.
       const handshakeUserId = socket.handshake.auth?.userId;
       if (handshakeUserId) {
-        this.userSocketMap.set(handshakeUserId, socket.id);
+        this.addSocketForUser(handshakeUserId, socket.id);
         console.log(
           `User ${handshakeUserId} added from handshake for socket ${socket.id}`,
         );
       } else {
         // Optionally set a timeout to warn if no authentication is received.
         setTimeout(() => {
-          if (![...this.userSocketMap.values()].includes(socket.id)) {
+          if (
+            ![...this.userSocketMap.values()].some((set) => set.has(socket.id))
+          ) {
             console.warn(`No authentication received for socket ${socket.id}`);
           }
         }, 5000);
@@ -41,7 +44,7 @@ export default class SocketSingleton {
 
       socket.on("authenticate", (data: { userId: string }) => {
         if (data && data.userId) {
-          this.userSocketMap.set(data.userId, socket.id);
+          this.addSocketForUser(data.userId, socket.id);
           console.log(
             `User ${data.userId} authenticated with socket ${socket.id}`,
           );
@@ -53,7 +56,7 @@ export default class SocketSingleton {
       });
 
       socket.on(
-        "message",
+        "chat:message",
         async (data: {
           chatId: string;
           senderId: string;
@@ -81,16 +84,20 @@ export default class SocketSingleton {
             em.create(ChatMessage, chatMessage);
 
             console.log("Updated userSocketMap:", this.userSocketMap);
-            const recipientSocketId = this.userSocketMap.get(recipient.uuid);
-            if (recipientSocketId) {
-              this.io.to(recipientSocketId).emit("message", {
-                uuid: chatMessage.uuid,
-                senderId: sender.uuid,
-                recipientId: recipient.uuid,
-                content: chatMessage.content,
-                createdAt: chatMessage.createdAt,
-                chatId: chat.uuid,
-              });
+            // Get the set of socket IDs for the recipient
+            const recipientSocketSet = this.userSocketMap.get(recipient.uuid);
+            if (recipientSocketSet && recipientSocketSet.size > 0) {
+              // Emit to each socket the recipient has open
+              for (const recipientSocketId of recipientSocketSet) {
+                this.io.to(recipientSocketId).emit("message", {
+                  uuid: chatMessage.uuid,
+                  senderId: sender.uuid,
+                  recipientId: recipient.uuid,
+                  content: chatMessage.content,
+                  createdAt: chatMessage.createdAt,
+                  chatId: chat.uuid,
+                });
+              }
             } else {
               console.log(`Recipient ${recipient.uuid} is not connected.`);
             }
@@ -101,16 +108,33 @@ export default class SocketSingleton {
       );
 
       socket.on("disconnect", () => {
-        for (const [userId, sockId] of this.userSocketMap.entries()) {
-          if (sockId === socket.id) {
-            this.userSocketMap.delete(userId);
-            console.log(`User ${userId} disconnected.`);
+        // Iterate over the map to remove this socket from any user's set.
+        for (const [userId, socketSet] of this.userSocketMap.entries()) {
+          if (socketSet.has(socket.id)) {
+            socketSet.delete(socket.id);
+            if (socketSet.size === 0) {
+              this.userSocketMap.delete(userId);
+              console.log(`User ${userId} disconnected completely.`);
+            } else {
+              console.log(`Socket ${socket.id} removed from user ${userId}`);
+            }
             break;
           }
         }
         console.log(`Socket disconnected: ${socket.id}`);
       });
     });
+  }
+
+  /**
+   * Helper method to add a socket id to a user's set.
+   */
+  private addSocketForUser(userId: string, socketId: string): void {
+    if (this.userSocketMap.has(userId)) {
+      this.userSocketMap.get(userId)?.add(socketId);
+    } else {
+      this.userSocketMap.set(userId, new Set([socketId]));
+    }
   }
 
   private generatePrivateChatName(
