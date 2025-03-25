@@ -48,7 +48,6 @@ app
   .use(new ChatController().routes())
   .use(new ChatController().allowedMethods());
 
-// Start the server and log the port
 server.listen(3000, () => {
   console.log(`Auth server is running on port 3000`);
 });

@@ -20,3 +20,5 @@ export enum MentorRequestStatus {
   APPROVED = "approved",
   REJECTED = "rejected",
 }
+
+export enum Specialities {}
