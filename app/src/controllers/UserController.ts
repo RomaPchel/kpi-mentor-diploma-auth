@@ -3,7 +3,10 @@ import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { MentorRequestStatus, UserRole } from "../enums/UserEnums.js";
-import type { BecomeMentorApiRequest } from "../interfaces/UserInterface.js";
+import type {
+  BecomeMentorApiRequest,
+  UserProfileUpdateRequest,
+} from "../interfaces/UserInterface.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { em } from "../db/config.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
@@ -21,6 +24,8 @@ export class UserController extends Router {
       AuthMiddleware(),
       this.createBecomeMentorRequest,
     );
+
+    this.put("/profile", AuthMiddleware(), this.updateUserInfo);
 
     this.get(
       "/become-mentor-request",
@@ -58,6 +63,34 @@ export class UserController extends Router {
     this.get("/mentors", AuthMiddleware(), this.getAllMentors);
   }
 
+  private async updateUserInfo(ctx: Context): Promise<void> {
+    try {
+      const user: User = ctx.state.user as User;
+      const data = ctx.request.body as UserProfileUpdateRequest;
+
+      user.firstName = data.firstName ?? user.firstName;
+      user.lastName = data.lastName ?? user.lastName;
+      user.email = data.email ?? user.email;
+      user.avatar = data.avatar ?? user.avatar;
+      user.bio = data.bio ?? user.bio;
+      user.specializationCode =
+        data.specializationCode ?? user.specializationCode;
+      user.specializationTitle =
+        data.specializationTitle ?? user.specializationTitle;
+      user.formOfEducation = data.formOfEducation ?? user.formOfEducation;
+      user.groupCode = data.groupCode ?? user.groupCode;
+      user.department = data.department ?? user.department;
+      user.interests = data.interests ?? user.interests;
+
+      await em.persistAndFlush(user);
+
+      ctx.status = 201;
+      ctx.body = { message: "Updated successfully." };
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   private async createBecomeMentorRequest(ctx: Context): Promise<void> {
     try {
       const user: User = ctx.state.user as User;
@@ -88,9 +121,11 @@ export class UserController extends Router {
   private async getOwnBecomeMentorRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
-    ctx.body = await em.findOne(BecomeMentorRequest, {
+    const request = await em.findOne(BecomeMentorRequest, {
       user: user.uuid,
     });
+    console.log(request);
+    ctx.body = request;
     ctx.status = 200;
   }
 

@@ -13,6 +13,7 @@ import { ChatController } from "./controllers/ChatController.js";
 const app = new Koa();
 const server: HTTPServer = createServer(app.callback());
 
+await orm.getSchemaGenerator().updateSchema();
 app.use(
   cors({
     origin: (ctx) => {
