@@ -38,7 +38,7 @@ export class User extends BaseEntity {
   @Property({ type: "text", nullable: true })
   bio?: string;
 
-  @ManyToMany(() => Event)
+  @ManyToMany(() => Event, (event) => event.participants) // Основне посилання
   events = new Collection<Event>(this);
 
   @BeforeCreate()
