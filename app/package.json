@@ -21,6 +21,8 @@
     "@mikro-orm/reflection": "^6.4.3",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.7",
+    "axios": "^1.8.4",
+    "cheerio": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
     "kpi-diploma-typescript-core": "1.0.2",
     "socket.io": "^4.8.1",

@@ -22,9 +22,7 @@ export class AuthController extends Router {
   }
 
   private async me(ctx: Context) {
-    const user: User = ctx.state.user as User;
-
-    ctx.body = await AuthenticationUtil.convertPersistedToUser(user);
+    ctx.body = ctx.state.user as User;
     ctx.status = 200;
   }
 

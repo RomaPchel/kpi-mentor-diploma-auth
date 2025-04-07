@@ -33,10 +33,28 @@ export class User extends BaseEntity {
   userChats = new Collection<UserChat>(this);
 
   @Property({ nullable: true })
-  avatar?: string;
+  avatar!: string;
 
   @Property({ type: "text", nullable: true })
-  bio?: string;
+  bio!: string;
+
+  @Property({ nullable: true })
+  specializationCode!: number;
+
+  @Property({ nullable: true })
+  specializationTitle!: string;
+
+  @Property({ nullable: true })
+  formOfEducation!: string;
+
+  @Property({ nullable: true })
+  groupCode!: string;
+
+  @Property({ nullable: true })
+  department!: string;
+
+  @Property({ nullable: true })
+  interests!: string[];
 
   @ManyToMany(() => Event, (event) => event.participants) // Основне посилання
   events = new Collection<Event>(this);
