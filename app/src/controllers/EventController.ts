@@ -2,7 +2,7 @@ import Router from "koa-router";
 import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { validate } from "class-validator";
-import EventService from "../services/EventService.js";
+import { EventService } from "../services/EventService.js";
 import type { CreateEventRequest } from "../requests/CreateEventRequest.js";
 import { ZodError } from "zod";
 import type { UpdateEventRequest } from "../requests/UpdateEventRequest.js";
@@ -13,16 +13,19 @@ interface HttpError extends Error {
 }
 
 export class EventController extends Router {
+  private readonly eventService: EventService;
+
   constructor() {
     super({ prefix: "/api/events" });
+    this.eventService = new EventService();
     this.setUpRoutes();
   }
 
   private setUpRoutes() {
-    this.post("/create", AuthMiddleware(), this.createEvent);
-    this.get("/:id", AuthMiddleware(), this.getEvent);
-    this.get("/", AuthMiddleware(), this.getAllEvents);
-    this.put("/:id", AuthMiddleware(), this.updateEvent);
+    this.post("/create", AuthMiddleware(), this.createEvent.bind(this));
+    this.get("/:id", AuthMiddleware(), this.getEvent.bind(this));
+    this.get("/", AuthMiddleware(), this.getAllEvents.bind(this));
+    this.put("/:id", AuthMiddleware(), this.updateEvent.bind(this));
   }
 
   private async createEvent(ctx: Context): Promise<void> {
@@ -41,7 +44,7 @@ export class EventController extends Router {
         return;
       }
 
-      const eventResponse = await EventService.createEvent(
+      const eventResponse = await this.eventService.createEvent(
         createEventRequest,
         user,
       );
@@ -70,7 +73,7 @@ export class EventController extends Router {
         ctx.throw(401, "Unauthorized");
       }
       const eventId = ctx.params.id;
-      const eventResponse = await EventService.getEventById(eventId);
+      const eventResponse = await this.eventService.getEventById(eventId);
 
       if (!eventResponse) {
         ctx.throw(404, "Event not found");
@@ -99,7 +102,7 @@ export class EventController extends Router {
       if (!user) {
         ctx.throw(401, "Unauthorized");
       }
-      const events = await EventService.getAllEvents();
+      const events = await this.eventService.getAllEvents();
       ctx.status = 200;
       ctx.body = events;
     } catch (e: unknown) {
@@ -134,7 +137,7 @@ export class EventController extends Router {
         return;
       }
 
-      const updatedEvent = await EventService.updateEvent(
+      const updatedEvent = await this.eventService.updateEvent(
         eventId,
         updateEventRequest,
       );

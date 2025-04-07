@@ -14,8 +14,8 @@ export class Event extends BaseEntity {
   @Enum(() => EventStatus)
   status: EventStatus = EventStatus.PLANNED;
 
-  @ManyToMany(() => User, (user) => user.events)
-  participants = new Collection<User>(this)
+  @ManyToMany(() => User)
+  participants = new Collection<User>(this);
 
   @Property({ type: "datetime" }) // Using timestamp with timezone support
   timestamp!: Date;
