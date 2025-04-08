@@ -59,10 +59,10 @@ export class UserController extends Router {
       "/become-mentor-request/:id",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
-      this.getBecomeMentorRequestById.bind(this),
+      this.deleteBecomeMentorRequest.bind(this),
     );
 
-    this.get("/mentors", AuthMiddleware(), this.getAllMentors);
+    this.get("/mentors", AuthMiddleware(), this.getAllMentors.bind(this));
   }
 
   private async updateUserInfo(ctx: Context): Promise<void> {
@@ -78,21 +78,21 @@ export class UserController extends Router {
   }
 
   private async createBecomeMentorRequest(ctx: Context): Promise<void> {
-      const user: User = ctx.state.user as User;
+    const user: User = ctx.state.user as User;
 
-      const motivation = ctx.request.body as CreateMentorRequest;
+    const motivation = ctx.request.body as CreateMentorRequest;
 
-      const existingRequest =
-        await this.userService.getOwnBecomeMentorRequest(user);
-      if (existingRequest) {
-        ctx.throw(400, "You already have a pending request.");
-      }
+    const existingRequest =
+      await this.userService.getOwnBecomeMentorRequest(user);
+    if (existingRequest) {
+      ctx.throw(400, "You already have a pending request.");
+    }
 
-      ctx.body = await this.userService.createBecomeMentorRequest(
-        user,
-        motivation,
-      );
-      ctx.status = 200;
+    ctx.body = await this.userService.createBecomeMentorRequest(
+      user,
+      motivation,
+    );
+    ctx.status = 200;
   }
 
   private async getOwnBecomeMentorRequest(ctx: Context): Promise<void> {
@@ -142,18 +142,13 @@ export class UserController extends Router {
     }
 
     const id = ctx.params.id;
-    const request = await this.userService.getBecomeMentorRequestById(user, id);
-    if (!request) {
-      ctx.throw(404, "Mentor request not found.");
-    }
+
     await this.userService.deleteById(id);
     ctx.status = 200;
   }
 
   private async getAllMentors(ctx: Context): Promise<void> {
-    console.log("ffrf")
-
-    ctx.body = this.userService.getAllMentors();
+    ctx.body = await this.userService.getAllMentors();
     ctx.status = 200;
   }
 }

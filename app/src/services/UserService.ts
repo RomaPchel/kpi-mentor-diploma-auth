@@ -3,8 +3,8 @@ import { MentorProfile } from "../entities/MentorProfile.js";
 import { em } from "../db/config.js";
 import { MentorRequestStatus, UserRole } from "../enums/UserEnums.js";
 import type {
-  CreateMentorRequest,
   BecomeMentorRequestResponse,
+  CreateMentorRequest,
   MentorProfileResponse,
   UpdateMentorRequest,
   UserProfileResponse,
@@ -91,10 +91,10 @@ export class UserService {
     if (!request) throw new Error("Mentor request not found.");
 
     if (data.status === MentorRequestStatus.APPROVED) {
-       const mentorProfile = new MentorProfile();
-       mentorProfile.mentor = request.user;
-       mentorProfile.rating = -1;
-       mentorProfile.totalReviews = 0;
+      const mentorProfile = new MentorProfile();
+      mentorProfile.mentor = request.user;
+      mentorProfile.rating = -1;
+      mentorProfile.totalReviews = 0;
       await em.persistAndFlush(mentorProfile);
     }
 
@@ -108,14 +108,22 @@ export class UserService {
 
   async getAllMentors() {
     const mentors = await em.find(MentorProfile, {}, { populate: ["mentor"] });
-
+    console.log(mentors);
     return mentors.map((mentorProfile) =>
       this.toMentorProfileResponse(mentorProfile),
     );
   }
 
   async deleteById(id: string) {
-    await em.removeAndFlush(BecomeMentorRequest, { uuid: id });
+    const request = await await em.findOne(
+      BecomeMentorRequest,
+      { uuid: id },
+      { populate: ["user"] },
+    );
+    if (!request) {
+      throw Error("Mentor request not found.");
+    }
+    await em.removeAndFlush(request);
   }
 
   private toUserProfileResponse(user: User): UserProfileResponse {
