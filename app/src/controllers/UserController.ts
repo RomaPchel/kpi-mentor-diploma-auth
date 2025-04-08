@@ -3,18 +3,19 @@ import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { MentorRequestStatus, UserRole } from "../enums/UserEnums.js";
-import type {
-  BecomeMentorApiRequest,
-  UserProfileUpdateRequest,
-} from "../interfaces/UserInterface.js";
+import type { BecomeMentorApiRequest } from "../interfaces/UserInterface.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { em } from "../db/config.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
 import { MentorProfile } from "../entities/MentorProfile.js";
+import { UserService } from "../services/UserService.js";
 
 export class UserController extends Router {
+  private readonly userService: UserService;
+
   constructor() {
     super({ prefix: "/api/user" });
+    this.userService = new UserService();
     this.setUpRoutes();
   }
 
@@ -22,7 +23,7 @@ export class UserController extends Router {
     this.post(
       "/become-mentor-request",
       AuthMiddleware(),
-      this.createBecomeMentorRequest,
+      this.createBecomeMentorRequest.bind(this),
     );
 
     this.put("/profile", AuthMiddleware(), this.updateUserInfo);
@@ -97,9 +98,7 @@ export class UserController extends Router {
 
       const { motivation } = ctx.request.body as BecomeMentorApiRequest;
 
-      const existingRequest = await em.findOne(BecomeMentorRequest, {
-        user: user.uuid,
-      });
+      const existingRequest = await this.userService.getOwnBecomeMentorRequest(user);
       if (existingRequest) {
         ctx.throw(400, "You already have a pending request.");
       }

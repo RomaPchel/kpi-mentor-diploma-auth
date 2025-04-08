@@ -13,3 +13,17 @@ export interface UpdateEventRequest {
   participants: string[];
 }
 
+export interface EventResponse {
+  id: string;
+  url: string;
+  status: EventStatus;
+  timestamp: Date;
+  owner: {
+    id: string;
+    name: string;
+  };
+  participants: Array<{
+    id: string;
+    name: string;
+  }>;
+}
