@@ -3,10 +3,12 @@ import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { validate } from "class-validator";
 import { EventService } from "../services/EventService.js";
-import type { CreateEventRequest } from "../requests/CreateEventRequest.js";
 import { ZodError } from "zod";
-import type { UpdateEventRequest } from "../requests/UpdateEventRequest.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
+import type {
+  CreateEventRequest,
+  UpdateEventRequest,
+} from "../interfaces/EventInterfaces.js";
 
 interface HttpError extends Error {
   status?: number;

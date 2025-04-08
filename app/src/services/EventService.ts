@@ -1,10 +1,9 @@
 import { Event } from "../entities/Event.js";
 import { User } from "../entities/User.js";
 import { EventStatus } from "../enums/EventEnums.js";
-import type { CreateEventRequest } from "../requests/CreateEventRequest.js";
 import { EventResponse } from "../responses/EventResponse.js";
 import { em } from "../db/config.js";
-import type { UpdateEventRequest } from "../requests/UpdateEventRequest.js";
+import type { CreateEventRequest, UpdateEventRequest } from "../interfaces/EventInterfaces";
 
 export class EventService {
   async createEvent(req: CreateEventRequest, owner: User) {
