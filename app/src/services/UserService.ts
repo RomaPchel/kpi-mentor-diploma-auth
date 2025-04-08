@@ -1,15 +1,16 @@
-import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { User } from "../entities/User.js";
 import { MentorProfile } from "../entities/MentorProfile.js";
 import { em } from "../db/config.js";
 import { MentorRequestStatus, UserRole } from "../enums/UserEnums.js";
 import type {
-  BecomeMentorApiRequest,
+  CreateMentorRequest,
   BecomeMentorRequestResponse,
   MentorProfileResponse,
+  UpdateMentorRequest,
   UserProfileResponse,
   UserProfileUpdateRequest,
 } from "../interfaces/UserInterface.js";
+import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 
 export class UserService {
   async updateUserProfile(user: User, data: UserProfileUpdateRequest) {
@@ -32,7 +33,7 @@ export class UserService {
     return this.toUserProfileResponse(user);
   }
 
-  async createBecomeMentorRequest(user: User, req: BecomeMentorApiRequest) {
+  async createBecomeMentorRequest(user: User, req: CreateMentorRequest) {
     const existingRequest = await em.findOne(BecomeMentorRequest, {
       user: user.uuid,
     });
@@ -42,7 +43,7 @@ export class UserService {
 
     const request = new BecomeMentorRequest();
     request.user = user;
-    request.motivation = req.motivation;
+    request.motivation = req.motivation ?? null;
     request.status = MentorRequestStatus.PENDING;
 
     await em.persistAndFlush(request);
@@ -81,16 +82,21 @@ export class UserService {
     return this.toMentorRequestResponse(request);
   }
 
-  async updateBecomeMentorRequest(
-    id: string,
-    data: Partial<{ status: MentorRequestStatus; motivation: string }>,
-  ) {
+  async updateBecomeMentorRequest(id: string, data: UpdateMentorRequest) {
     const request = await em.findOne(
       BecomeMentorRequest,
       { uuid: id },
       { populate: ["user"] },
     );
     if (!request) throw new Error("Mentor request not found.");
+
+    if (data.status === MentorRequestStatus.APPROVED) {
+       const mentorProfile = new MentorProfile();
+       mentorProfile.mentor = request.user;
+       mentorProfile.rating = -1;
+       mentorProfile.totalReviews = 0;
+      await em.persistAndFlush(mentorProfile);
+    }
 
     if (data.status) request.status = data.status;
     if (data.motivation) request.motivation = data.motivation;
@@ -106,6 +112,10 @@ export class UserService {
     return mentors.map((mentorProfile) =>
       this.toMentorProfileResponse(mentorProfile),
     );
+  }
+
+  async deleteById(id: string) {
+    await em.removeAndFlush(BecomeMentorRequest, { uuid: id });
   }
 
   private toUserProfileResponse(user: User): UserProfileResponse {

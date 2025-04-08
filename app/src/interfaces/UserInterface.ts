@@ -1,8 +1,14 @@
 import type { MentorRequestStatus } from "../enums/UserEnums";
 
-export interface BecomeMentorApiRequest {
+export interface CreateMentorRequest {
   motivation: string;
 }
+
+export interface UpdateMentorRequest {
+  motivation: string;
+  status: MentorRequestStatus;
+}
+
 
 export interface UserProfileUpdateRequest {
   firstName?: string;
