@@ -9,7 +9,7 @@ export class BecomeMentorRequest extends BaseEntity {
   user!: User;
 
   @Property({ type: "text", nullable: true })
-  motivation?: string;
+  motivation?: string | null;
 
   @Enum(() => MentorRequestStatus)
   status: MentorRequestStatus = MentorRequestStatus.PENDING;
