@@ -63,6 +63,16 @@ export class UserController extends Router {
     );
 
     this.get("/mentors", AuthMiddleware(), this.getAllMentors.bind(this));
+    this.get(
+      "/mentee-request/:uuid",
+      AuthMiddleware(),
+      this.getYourMenteeRequest.bind(this),
+    );
+    this.post(
+      "/become-mentee-request",
+      AuthMiddleware(),
+      this.becomeMentee.bind(this),
+    );
     this.get("/mentors/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
   }
 
@@ -151,6 +161,39 @@ export class UserController extends Router {
   private async getAllMentors(ctx: Context): Promise<void> {
     ctx.body = await this.userService.getAllMentors();
     ctx.status = 200;
+  }
+
+  private async getYourMenteeRequest(ctx: Context): Promise<void> {
+    const mentorUuid = ctx.params.uuid as string;
+    const user: User = ctx.state.user;
+
+    const request = await this.userService.getYourMenteeRequest(
+      mentorUuid,
+      user.uuid,
+    );
+    console.log(request);
+    ctx.body = request;
+    ctx.status = 200;
+  }
+
+  private async becomeMentee(ctx: Context): Promise<void> {
+    try {
+      const user: User = ctx.state.user;
+      console.log(user);
+      const { mentorUuid, motivation } = (await ctx.request.body) as {
+        mentorUuid: string;
+        motivation: string;
+      };
+
+      ctx.body = await this.userService.becomeMentee(
+        user,
+        mentorUuid,
+        motivation,
+      );
+      ctx.status = 201;
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   private async getOneMentor(ctx: Context): Promise<void> {

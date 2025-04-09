@@ -11,6 +11,7 @@ import type {
   UserProfileUpdateRequest,
 } from "../interfaces/UserInterface.js";
 import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
+import { BecomeMenteeRequest } from "../entities/BecomeManteeRequest.js";
 
 export class UserService {
   async updateUserProfile(user: User, data: UserProfileUpdateRequest) {
@@ -112,6 +113,45 @@ export class UserService {
     return mentors.map((mentorProfile) =>
       this.toMentorProfileResponse(mentorProfile),
     );
+  }
+
+  async getYourMenteeRequest(mentorUuid: string, userUuid: string) {
+    return await em.findOne(BecomeMenteeRequest, {
+      mentor: mentorUuid,
+      user: userUuid,
+    });
+  }
+
+  async becomeMentee(
+    requestingUser: User,
+    mentorUuid: string,
+    motivation: string,
+  ) {
+    const mentor = await em.findOneOrFail(User, { uuid: mentorUuid });
+
+    const existing = await em.findOne(BecomeMenteeRequest, {
+      user: requestingUser,
+      mentor: mentor,
+    });
+
+    if (existing) {
+      throw new Error(
+        "You have already requested to become a mentee for this mentor.",
+      );
+    }
+
+    const request = new BecomeMenteeRequest();
+    request.user = requestingUser;
+    request.mentor = mentor;
+    request.motivation = motivation;
+    request.status = MentorRequestStatus.PENDING;
+
+    await em.persistAndFlush(request);
+
+    return {
+      success: true,
+      message: "Mentee request submitted successfully.",
+    };
   }
 
   async getOneMentor(uuid: string) {
