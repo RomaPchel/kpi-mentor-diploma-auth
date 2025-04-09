@@ -9,7 +9,6 @@ export interface UpdateMentorRequest {
   status: MentorRequestStatus;
 }
 
-
 export interface UserProfileUpdateRequest {
   firstName?: string;
   lastName?: string;
@@ -52,8 +51,14 @@ export interface BecomeMentorRequestResponse {
 }
 
 export interface MentorProfileResponse {
-  id: string;
+  uuid: string;
   name: string;
+  avatar: string;
+  mentorUuid: string;
+  email: string;
+  interests: string[];
+  specialization: string;
+  bio: string;
   rating: number;
   totalReviews: number;
 }

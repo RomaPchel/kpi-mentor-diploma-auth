@@ -108,14 +108,24 @@ export class UserService {
 
   async getAllMentors() {
     const mentors = await em.find(MentorProfile, {}, { populate: ["mentor"] });
-    console.log(mentors);
+
     return mentors.map((mentorProfile) =>
       this.toMentorProfileResponse(mentorProfile),
     );
   }
 
+  async getOneMentor(uuid: string) {
+    const mentor = await em.findOne(
+      MentorProfile,
+      { uuid: uuid },
+      { populate: ["mentor"] },
+    );
+
+    return this.toMentorProfileResponse(mentor as MentorProfile);
+  }
+
   async deleteById(id: string) {
-    const request = await await em.findOne(
+    const request = await em.findOne(
       BecomeMentorRequest,
       { uuid: id },
       { populate: ["user"] },
@@ -163,8 +173,14 @@ export class UserService {
     profile: MentorProfile,
   ): MentorProfileResponse {
     return {
-      id: profile.uuid,
+      uuid: profile.uuid,
+      mentorUuid: profile.mentor.uuid,
+      avatar: profile.mentor.avatar,
+      email: profile.mentor.email,
+      interests: profile.mentor.interests,
       name: `${profile.mentor.firstName} ${profile.mentor.lastName}`,
+      specialization: profile.mentor.specializationTitle,
+      bio: profile.mentor.bio,
       rating: profile.rating,
       totalReviews: profile.totalReviews,
     };

@@ -8,7 +8,6 @@ import { User } from "../entities/User.js";
 import { em } from "../db/config.js";
 import { ZodError } from "zod";
 
-// Custom error type that allows for status property
 interface HttpError extends Error {
   status?: number;
 }
@@ -23,6 +22,7 @@ export class ChatController extends Router {
     this.get("/", AuthMiddleware(), this.getChats);
     this.get("/:chatId", AuthMiddleware(), this.getChat);
     this.post("/:chatId/read", this.markAsRead);
+    this.post("/", AuthMiddleware(), this.createChat);
   }
 
   private async getChats(ctx: Context) {
@@ -30,7 +30,6 @@ export class ChatController extends Router {
       const user: User = ctx.state.user as User;
       console.log("User requesting chats:", user.uuid);
 
-      // Get all chat connections for the user with messages and related user chats populated
       const userChats = await em.find(
         UserChat,
         { user: user },
@@ -47,10 +46,24 @@ export class ChatController extends Router {
 
       console.log(`Found ${userChats.length} chats for user ${user.uuid}`);
 
-      // Map over each user-chat connection
+      console.log(userChats);
+
+      userChats.sort((a, b) => {
+        if (a.chat.messages.length === 0 && b.chat.messages.length > 0) {
+          return -1;
+        }
+        if (b.chat.messages.length === 0 && a.chat.messages.length > 0) {
+          return 1;
+        }
+
+        return (
+          a.chat.messages[a.chat.messages.length - 1].createdAt.getTime() -
+          b.chat.messages[b.chat.messages.length - 1].createdAt.getTime()
+        );
+      });
+
       ctx.body = await Promise.all(
         userChats.map(async (userChat) => {
-          // Get the other users in the chat (exclude the current user)
           const otherUserChats = await em.find(
             UserChat,
             {
@@ -62,14 +75,12 @@ export class ChatController extends Router {
           const otherUser =
             otherUserChats.length > 0 ? otherUserChats[0].user : null;
 
-          // Count unread messages: messages sent by others after the last read time
           const unreadCount = await em.count(ChatMessage, {
             chat: userChat.chat,
             sender: { $ne: user },
             createdAt: { $gt: userChat.lastReadAt || new Date(0) },
           });
 
-          // Get all messages for this chat, mapping each message to a plain object
           const messages = userChat.chat.messages
             .getItems()
             .map((message) => ({
@@ -86,7 +97,6 @@ export class ChatController extends Router {
               createdAt: message.createdAt,
               updatedAt: message.updatedAt,
             }))
-            // Sort messages in chronological order
             .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
           return {
@@ -265,4 +275,45 @@ export class ChatController extends Router {
       }
     }
   }
+
+  private async createChat(ctx: Context) {
+    try {
+      const user: User = ctx.state.user as User;
+      const body = ctx.request.body as { mentorUuid: string };
+
+      const mentor = await em.findOne(User, { uuid: body.mentorUuid });
+      console.log(mentor);
+
+      const chat = await findOrCreateChatBetween(user, mentor as User);
+
+      ctx.status = 200;
+      ctx.body = { chatUuid: chat.uuid };
+    } catch (e) {
+      console.error("Error in createChat:", e);
+    }
+  }
+}
+
+async function findOrCreateChatBetween(user1: User, user2: User) {
+  console.log("ADASDAS");
+  const chat = await em
+    .createQueryBuilder(Chat, "c")
+    .select("c.*")
+    .leftJoin("c.userChats", "uc1")
+    .leftJoin("c.userChats", "uc2")
+    .where({ "uc1.user": user1, "uc2.user": user2 })
+    .getSingleResult();
+
+  if (chat) {
+    return chat;
+  }
+
+  const newChat = new Chat();
+  const userChat1 = new UserChat(user1, newChat);
+  const userChat2 = new UserChat(user2, newChat);
+
+  em.persist([newChat, userChat1, userChat2]);
+  await em.flush();
+
+  return newChat;
 }

@@ -63,6 +63,7 @@ export class UserController extends Router {
     );
 
     this.get("/mentors", AuthMiddleware(), this.getAllMentors.bind(this));
+    this.get("/mentors/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
   }
 
   private async updateUserInfo(ctx: Context): Promise<void> {
@@ -149,6 +150,13 @@ export class UserController extends Router {
 
   private async getAllMentors(ctx: Context): Promise<void> {
     ctx.body = await this.userService.getAllMentors();
+    ctx.status = 200;
+  }
+
+  private async getOneMentor(ctx: Context): Promise<void> {
+    const uuid = ctx.params.uuid;
+
+    ctx.body = await this.userService.getOneMentor(uuid);
     ctx.status = 200;
   }
 }
