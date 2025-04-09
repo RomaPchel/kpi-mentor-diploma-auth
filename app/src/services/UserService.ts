@@ -13,6 +13,7 @@ import type {
 import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { BecomeMenteeRequest } from "../entities/BecomeManteeRequest.js";
 import { findOrCreateChatBetween } from "../controllers/ChatController.js";
+import { MentorStudent } from "../entities/StudentMentor.js";
 
 export class UserService {
   async updateUserProfile(user: User, data: UserProfileUpdateRequest) {
@@ -108,8 +109,12 @@ export class UserService {
     return this.toMentorRequestResponse(request);
   }
 
-  async getAllMentors() {
-    const mentors = await em.find(MentorProfile, {}, { populate: ["mentor"] });
+  async getAllMentors(userUuid?: string) {
+    const where = userUuid ? { mentor: { uuid: { $ne: userUuid } } } : {};
+
+    const mentors = await em.find(MentorProfile, where, {
+      populate: ["mentor"],
+    });
 
     return mentors.map((mentorProfile) =>
       this.toMentorProfileResponse(mentorProfile),
@@ -117,9 +122,15 @@ export class UserService {
   }
 
   async getYourMenteeRequest(mentorUuid: string, userUuid: string) {
-    return await em.findOne(BecomeMenteeRequest, {
+    return await em.find(BecomeMenteeRequest, {
       mentor: mentorUuid,
       user: userUuid,
+    });
+  }
+
+  async getYourMentees(userUuid: string) {
+    return await em.find(MentorStudent, {
+      mentor: userUuid,
     });
   }
 
@@ -213,6 +224,7 @@ export class UserService {
       { populate: ["mentor"] },
     );
 
+    console.log(mentor);
     return this.toMentorProfileResponse(mentor as MentorProfile);
   }
 

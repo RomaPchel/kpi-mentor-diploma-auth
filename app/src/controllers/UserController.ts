@@ -74,6 +74,12 @@ export class UserController extends Router {
       roleMiddleware(UserRole.MENTOR),
       this.getMentorMenteeRequests.bind(this),
     );
+    this.get(
+      "/mentees",
+      AuthMiddleware(),
+      roleMiddleware(UserRole.MENTOR),
+      this.getYourMentees.bind(this),
+    );
     this.post(
       "/mentee-request/:uuid/approve",
       AuthMiddleware(),
@@ -177,7 +183,9 @@ export class UserController extends Router {
   }
 
   private async getAllMentors(ctx: Context): Promise<void> {
-    ctx.body = await this.userService.getAllMentors();
+    const user: User = ctx.state.user;
+
+    ctx.body = await this.userService.getAllMentors(user.uuid);
     ctx.status = 200;
   }
 
@@ -185,10 +193,19 @@ export class UserController extends Router {
     const mentorUuid = ctx.params.uuid as string;
     const user: User = ctx.state.user;
 
+    console.log(mentorUuid);
+
     ctx.body = await this.userService.getYourMenteeRequest(
       mentorUuid,
       user.uuid,
     );
+    ctx.status = 200;
+  }
+
+  private async getYourMentees(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+
+    ctx.body = await this.userService.getYourMentees(user.uuid);
     ctx.status = 200;
   }
 
@@ -241,7 +258,6 @@ export class UserController extends Router {
 
   private async getOneMentor(ctx: Context): Promise<void> {
     const uuid = ctx.params.uuid;
-
     ctx.body = await this.userService.getOneMentor(uuid);
     ctx.status = 200;
   }
