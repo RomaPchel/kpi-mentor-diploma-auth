@@ -167,12 +167,10 @@ export class UserController extends Router {
     const mentorUuid = ctx.params.uuid as string;
     const user: User = ctx.state.user;
 
-    const request = await this.userService.getYourMenteeRequest(
+    ctx.body = await this.userService.getYourMenteeRequest(
       mentorUuid,
       user.uuid,
     );
-    console.log(request);
-    ctx.body = request;
     ctx.status = 200;
   }
 
