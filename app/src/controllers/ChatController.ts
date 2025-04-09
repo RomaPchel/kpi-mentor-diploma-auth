@@ -294,7 +294,7 @@ export class ChatController extends Router {
   }
 }
 
-async function findOrCreateChatBetween(user1: User, user2: User) {
+export async function findOrCreateChatBetween(user1: User, user2: User) {
   console.log("ADASDAS");
   const chat = await em
     .createQueryBuilder(Chat, "c")

@@ -68,6 +68,24 @@ export class UserController extends Router {
       AuthMiddleware(),
       this.getYourMenteeRequest.bind(this),
     );
+    this.get(
+      "/mentee-requests",
+      AuthMiddleware(),
+      roleMiddleware(UserRole.MENTOR),
+      this.getMentorMenteeRequests.bind(this),
+    );
+    this.post(
+      "/mentee-request/:uuid/approve",
+      AuthMiddleware(),
+      roleMiddleware(UserRole.MENTOR),
+      this.approveMenteeRequest.bind(this),
+    );
+    this.post(
+      "/mentee-request/:uuid/reject",
+      AuthMiddleware(),
+      roleMiddleware(UserRole.MENTOR),
+      this.rejectMenteeRequest.bind(this),
+    );
     this.post(
       "/become-mentee-request",
       AuthMiddleware(),
@@ -169,6 +187,33 @@ export class UserController extends Router {
 
     ctx.body = await this.userService.getYourMenteeRequest(
       mentorUuid,
+      user.uuid,
+    );
+    ctx.status = 200;
+  }
+
+  private async getMentorMenteeRequests(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+
+    ctx.body = await this.userService.getMentorMenteeRequests(user.uuid);
+    ctx.status = 200;
+  }
+
+  private async approveMenteeRequest(ctx: Context): Promise<void> {
+    const mentor: User = ctx.state.user;
+
+    ctx.body = await this.userService.approveMenteeRequest(
+      ctx.params.uuid as string,
+      mentor,
+    );
+    ctx.status = 200;
+  }
+
+  private async rejectMenteeRequest(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+
+    ctx.body = await this.userService.rejectMenteeRequest(
+      ctx.params.uuid as string,
       user.uuid,
     );
     ctx.status = 200;

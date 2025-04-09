@@ -12,6 +12,7 @@ import type {
 } from "../interfaces/UserInterface.js";
 import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { BecomeMenteeRequest } from "../entities/BecomeManteeRequest.js";
+import { findOrCreateChatBetween } from "../controllers/ChatController.js";
 
 export class UserService {
   async updateUserProfile(user: User, data: UserProfileUpdateRequest) {
@@ -120,6 +121,57 @@ export class UserService {
       mentor: mentorUuid,
       user: userUuid,
     });
+  }
+
+  async approveMenteeRequest(uuid: string, mentor: User) {
+    const req = await em.findOneOrFail(BecomeMenteeRequest, {
+      uuid,
+      mentor,
+    });
+
+    req.status = MentorRequestStatus.APPROVED;
+    req.processedAt = new Date();
+    await em.persistAndFlush(req);
+
+    const user = await em.findOne(User, { uuid: req.user.uuid });
+    await findOrCreateChatBetween(user as User, mentor);
+  }
+
+  async rejectMenteeRequest(uuid: string, mentor: string) {
+    const req = await em.findOneOrFail(BecomeMenteeRequest, {
+      uuid,
+      mentor,
+    });
+
+    req.status = MentorRequestStatus.REJECTED;
+    req.processedAt = new Date();
+    await em.persistAndFlush(req);
+  }
+
+  async getMentorMenteeRequests(mentorUuid: string) {
+    const requests = await em.find(
+      BecomeMenteeRequest,
+      { mentor: mentorUuid, status: MentorRequestStatus.PENDING },
+      {
+        populate: ["user"],
+        orderBy: { createdAt: "DESC" },
+      },
+    );
+
+    return {
+      requests: requests.map((req) => ({
+        uuid: req.uuid,
+        motivation: req.motivation,
+        status: req.status,
+        createdAt: req.createdAt,
+        mentee: {
+          uuid: req.user.uuid,
+          name: `${req.user.firstName} ${req.user.lastName}`,
+          email: req.user.email,
+          avatar: req.user.avatar || "",
+        },
+      })),
+    };
   }
 
   async becomeMentee(
