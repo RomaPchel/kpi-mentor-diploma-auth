@@ -6,6 +6,7 @@ import type {
   BecomeMentorRequestResponse,
   CreateMentorRequest,
   MentorProfileResponse,
+  RateMentorRequest,
   UpdateMentorRequest,
   UserProfileResponse,
   UserProfileUpdateRequest,
@@ -288,5 +289,26 @@ export class UserService {
       rating: profile.rating,
       totalReviews: profile.totalReviews,
     };
+  }
+
+  async rateMentor(uuid: string, rateRequest: RateMentorRequest) {
+    const mentor = await em.findOne(
+      MentorProfile,
+      { uuid: uuid },
+      { populate: ["mentor"] },
+    );
+    if (mentor === null) {
+      throw new Error("Mentor not found");
+    }
+    if (mentor.rating < 0) {
+      mentor.rating = rateRequest.rating;
+      mentor.totalReviews++;
+      await em.persistAndFlush(mentor);
+    } else {
+      const sum = (mentor.rating * mentor.totalReviews) + rateRequest.rating;
+      mentor.rating = sum / (mentor.totalReviews + 1);
+      mentor.totalReviews++;
+      await em.persistAndFlush(mentor);
+    }
   }
 }

@@ -4,6 +4,7 @@ import type { User } from "../entities/User.js";
 import { UserRole } from "../enums/UserEnums.js";
 import type {
   CreateMentorRequest,
+  RateMentorRequest,
   UpdateMentorRequest,
   UserProfileUpdateRequest,
 } from "../interfaces/UserInterface.js";
@@ -98,6 +99,7 @@ export class UserController extends Router {
       this.becomeMentee.bind(this),
     );
     this.get("/mentors/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
+    this.put("/mentors/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
   }
 
   private async updateUserInfo(ctx: Context): Promise<void> {
@@ -259,6 +261,18 @@ export class UserController extends Router {
   private async getOneMentor(ctx: Context): Promise<void> {
     const uuid = ctx.params.uuid;
     ctx.body = await this.userService.getOneMentor(uuid);
+    ctx.status = 200;
+  }
+
+  private async rateMentor(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
+    const uuid = ctx.params.uuid;
+    const rateRequest = ctx.request.body as RateMentorRequest;
+
+    await this.userService.rateMentor(uuid, rateRequest);
     ctx.status = 200;
   }
 }

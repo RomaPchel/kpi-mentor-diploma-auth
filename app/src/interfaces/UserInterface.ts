@@ -4,6 +4,10 @@ export interface CreateMentorRequest {
   motivation: string;
 }
 
+export interface RateMentorRequest {
+  rating: number;
+}
+
 export interface UpdateMentorRequest {
   motivation: string;
   status: MentorRequestStatus;

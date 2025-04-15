@@ -54,6 +54,9 @@ export class User extends BaseEntity {
   department!: string;
 
   @Property({ nullable: true })
+  course!: number;
+
+  @Property({ nullable: true })
   interests!: string[];
 
   @ManyToMany(() => Event, (event) => event.participants) // Основне посилання
