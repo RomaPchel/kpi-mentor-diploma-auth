@@ -39,10 +39,7 @@ export class User extends BaseEntity {
   bio!: string;
 
   @Property({ nullable: true })
-  specializationCode!: number;
-
-  @Property({ nullable: true })
-  specializationTitle!: string;
+  specialization!: string;
 
   @Property({ nullable: true })
   formOfEducation!: string;
@@ -55,6 +52,9 @@ export class User extends BaseEntity {
 
   @Property({ nullable: true })
   course!: number;
+
+  @Property({ nullable: true })
+  levelOfEducation!: string;
 
   @Property({ nullable: true })
   interests!: string[];

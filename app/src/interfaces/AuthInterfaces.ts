@@ -3,6 +3,11 @@ export interface RegistrationRequestBody {
   password: string;
   firstName: string;
   lastName: string;
+  specialization: string;
+  formOfEducation: string;
+  groupCode: string;
+  department: string;
+  course: number;
 }
 
 export interface LoginRequestBody {
