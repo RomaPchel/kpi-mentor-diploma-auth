@@ -1,4 +1,4 @@
-import type { MentorRequestStatus } from "../enums/UserEnums";
+import { FormsOfEducation, type MentorRequestStatus } from "../enums/UserEnums";
 
 export interface CreateMentorRequest {
   motivation: string;
@@ -21,7 +21,7 @@ export interface UserProfileUpdateRequest {
   bio?: string;
   specializationCode?: number;
   specializationTitle?: string;
-  formOfEducation?: string;
+  formOfEducation?: FormsOfEducation;
   groupCode?: string;
   department?: string;
   interests?: string[];
