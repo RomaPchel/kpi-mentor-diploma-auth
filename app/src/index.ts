@@ -10,7 +10,7 @@ import { UserController } from "./controllers/UserController.js";
 import { ErrorMiddleware } from "./middlewares/ErrorMiddleware.js";
 import { ChatController } from "./controllers/ChatController.js";
 import { EventController } from "./controllers/EventController.js";
-import { SpecialityController } from "./controllers/SpecialityController";
+import { SpecialityController } from "./controllers/SpecialityController.js";
 
 const app = new Koa();
 const server: HTTPServer = createServer(app.callback());

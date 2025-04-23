@@ -5,9 +5,8 @@ export enum UserRole {
 }
 
 export enum FormsOfEducation {
-  MENTOR = "mentor",
-  STUDENT = "student",
-  ADMIN = "admin",
+  OFFLINE = "offline",
+  ONLINE = "online",
 }
 
 export enum TokenExpiration {
@@ -20,5 +19,3 @@ export enum MentorRequestStatus {
   APPROVED = "approved",
   REJECTED = "rejected",
 }
-
-export enum Specialities {}

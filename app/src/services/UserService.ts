@@ -23,10 +23,8 @@ export class UserService {
     user.email = data.email ?? user.email;
     user.avatar = data.avatar ?? user.avatar;
     user.bio = data.bio ?? user.bio;
-    user.specializationCode =
-      data.specializationCode ?? user.specializationCode;
-    user.specializationTitle =
-      data.specializationTitle ?? user.specializationTitle;
+    user.specializationCode = data.specializationCode ?? user.specializationCode;
+    user.specializationTitle = data.specializationTitle ?? user.specializationTitle;
     user.formOfEducation = data.formOfEducation ?? user.formOfEducation;
     user.groupCode = data.groupCode ?? user.groupCode;
     user.department = data.department ?? user.department;
@@ -305,7 +303,7 @@ export class UserService {
       mentor.totalReviews++;
       await em.persistAndFlush(mentor);
     } else {
-      const sum = (mentor.rating * mentor.totalReviews) + rateRequest.rating;
+      const sum = mentor.rating * mentor.totalReviews + rateRequest.rating;
       mentor.rating = sum / (mentor.totalReviews + 1);
       mentor.totalReviews++;
       await em.persistAndFlush(mentor);

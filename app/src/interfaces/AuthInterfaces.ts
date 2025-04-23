@@ -3,7 +3,8 @@ export interface RegistrationRequestBody {
   password: string;
   firstName: string;
   lastName: string;
-  specialization: string;
+  specializationCode: number;
+  specializationTitle: string;
   formOfEducation: string;
   groupCode: string;
   department: string;
