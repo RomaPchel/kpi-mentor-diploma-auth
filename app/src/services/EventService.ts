@@ -7,8 +7,15 @@ import type {
   EventResponse,
   UpdateEventRequest,
 } from "../interfaces/EventInterfaces.js";
+import { EventRepository } from "../repositories/EventRepository.js";
 
 export class EventService {
+  private readonly eventRepository: EventRepository;
+
+  constructor() {
+    this.eventRepository = new EventRepository();
+  }
+
   async createEvent(req: CreateEventRequest, owner: User) {
     const { url, timestamp, participants } = req;
 
@@ -22,17 +29,13 @@ export class EventService {
 
     event.timestamp = new Date(timestamp);
 
-    await em.persistAndFlush(event);
+    await this.eventRepository.save(event);
 
     return this.toEventResponse(event);
   }
 
   async getEventById(eventId: string) {
-    const event = await em.findOne(
-      Event,
-      { uuid: eventId },
-      { populate: ["participants"] }, // Ensure participants are populated
-    );
+    const event = await this.eventRepository.findById(eventId);
     if (!event) {
       throw new Error("Event not found");
     }
@@ -40,16 +43,14 @@ export class EventService {
   }
 
   async getAllEvents() {
-    const events = await em.findAll(Event, {
-      populate: ["participants"],
-    });
+    const events = await this.eventRepository.findAll();
     return events.map((event) => {
       return this.toEventResponse(event);
     });
   }
 
   async updateEvent(eventId: string, updateData: Partial<UpdateEventRequest>) {
-    const event = await em.findOne(Event, { uuid: eventId });
+    const event = await this.eventRepository.findById(eventId);
     if (!event) {
       throw new Error("Event not found");
     }
@@ -65,9 +66,9 @@ export class EventService {
       event.participants.set(participantUsers);
     }
 
-    await em.persistAndFlush(event);
+    await this.eventRepository.save(event);
 
-   return this.toEventResponse(event);
+    return this.toEventResponse(event);
   }
 
   private toEventResponse(event: Event): EventResponse {
