@@ -4,16 +4,38 @@ import koabodyparser from "koa-bodyparser";
 import { AuthController } from "./controllers/AuthController.js";
 import cors from "@koa/cors";
 import SocketSingleton from "./Utils/Socket.js";
-import { Server as HTTPServer, createServer } from "http";
+import { createServer, Server as HTTPServer } from "http";
 import { ValidationMiddleware } from "./middlewares/ValidationMiddleware.js";
 import { UserController } from "./controllers/UserController.js";
 import { ErrorMiddleware } from "./middlewares/ErrorMiddleware.js";
 import { ChatController } from "./controllers/ChatController.js";
 import { EventController } from "./controllers/EventController.js";
 import { SpecialityController } from "./controllers/SpecialityController.js";
+import { SwaggerRouter } from "koa-swagger-decorator";
 
 const app = new Koa();
+const router = new SwaggerRouter();
 const server: HTTPServer = createServer(app.callback());
+
+router.swagger({
+  title: "My API",
+  description: "API documentation",
+  version: "1.0.0",
+  prefix: "/api",
+  swaggerHtmlEndpoint: "/swagger-html",
+  swaggerJsonEndpoint: "/swagger-json",
+});
+
+router.map(
+  [
+    AuthController,
+    UserController,
+    ChatController,
+    EventController,
+    SpecialityController,
+  ],
+  {},
+);
 
 await orm.getSchemaGenerator().updateSchema();
 app.use(
@@ -40,6 +62,8 @@ await orm.connect().then(() => {
 SocketSingleton.getInstance(server);
 console.log("Socket instance initialized");
 
+app.use(router.routes()).use(router.allowedMethods());
+
 app.use(ValidationMiddleware());
 app
   .use(new AuthController().routes())
@@ -60,4 +84,4 @@ app
 server.listen(3000, () => {
   console.log(`Auth server is running on port 3000`);
 });
-await orm.getSchemaGenerator().updateSchema()
+await orm.getSchemaGenerator().updateSchema();

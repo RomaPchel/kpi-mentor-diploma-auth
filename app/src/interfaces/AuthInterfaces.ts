@@ -1,3 +1,5 @@
+import type { FormsOfEducation } from "../enums/UserEnums";
+
 export interface RegistrationRequestBody {
   email: string;
   password: string;
@@ -5,7 +7,7 @@ export interface RegistrationRequestBody {
   lastName: string;
   specializationCode: number;
   specializationTitle: string;
-  formOfEducation: string;
+  formOfEducation: FormsOfEducation;
   groupCode: string;
   department: string;
   course: number;

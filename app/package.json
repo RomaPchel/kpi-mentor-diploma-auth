@@ -28,7 +28,9 @@
     "kpi-diploma-typescript-core": "1.0.2",
     "socket.io": "^4.8.1",
     "uuid": "^11.0.5",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "koa-swagger-decorator": "^1.0.1",
+    "swagger-ui-koa": "^0.0.1"
   },
   "devDependencies": {
     "@swc/cli": "^0.6.0",
