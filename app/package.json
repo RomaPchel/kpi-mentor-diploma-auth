@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "npx swc --strip-leading-paths --config-file .swcrc ./src -d dist",
+    "postbuild": "copy .\\specialities.json .\\dist\\specialities.json",
     "prettier:format": "pnpm exec prettier . --write",
     "prettier:check": "npx prettier . --check\n",
     "docker:up": "docker compose -f ../docker/compose.yaml up -d",

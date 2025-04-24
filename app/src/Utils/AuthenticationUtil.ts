@@ -34,6 +34,12 @@ export class AuthenticationUtil {
     newUser.lastName = body.lastName;
     newUser.email = body.email;
     newUser.password = body.password; //hashed before creating via @BeforeCreate
+    newUser.specializationCode = body.specializationCode;
+    newUser.specializationTitle = body.specializationTitle;
+    newUser.formOfEducation = body.formOfEducation;
+    newUser.groupCode = body.groupCode;
+    newUser.department = body.department;
+    newUser.course = body.course;
 
     await em.persist(newUser).flush();
   }

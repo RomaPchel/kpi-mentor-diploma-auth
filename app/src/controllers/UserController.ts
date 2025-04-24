@@ -4,6 +4,7 @@ import type { User } from "../entities/User.js";
 import { UserRole } from "../enums/UserEnums.js";
 import type {
   CreateMentorRequest,
+  RateMentorRequest,
   UpdateMentorRequest,
   UserProfileUpdateRequest,
 } from "../interfaces/UserInterface.js";
@@ -98,6 +99,7 @@ export class UserController extends Router {
       this.becomeMentee.bind(this),
     );
     this.get("/mentors/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
+    this.put("/mentors/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
   }
 
   private async updateUserInfo(ctx: Context): Promise<void> {
@@ -184,14 +186,43 @@ export class UserController extends Router {
 
   private async getAllMentors(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
 
-    ctx.body = await this.userService.getAllMentors(user.uuid);
+    const {
+      name,
+      minRating,
+      maxRating,
+      minReviews,
+      maxReviews,
+      sortBy,
+      sortOrder,
+    } = ctx.query;
+
+    const filters: Record<string, any> = {};
+
+    if (name !== undefined) filters.name = name;
+    if (minRating !== undefined) filters.minRating = Number(minRating);
+    if (maxRating !== undefined) filters.maxRating = Number(maxRating);
+    if (minReviews !== undefined) filters.minReviews = Number(minReviews);
+    if (maxReviews !== undefined) filters.maxReviews = Number(maxReviews);
+
+    const sorting: Record<string, any> = {};
+
+    if (sortBy !== undefined) sorting.sortBy = sortBy;
+    if (sortOrder !== undefined) sorting.sortOrder = sortOrder;
+
+    ctx.body = await this.userService.getAllMentors(filters, sorting);
     ctx.status = 200;
   }
 
   private async getYourMenteeRequest(ctx: Context): Promise<void> {
     const mentorUuid = ctx.params.uuid as string;
     const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
 
     console.log(mentorUuid);
 
@@ -204,6 +235,9 @@ export class UserController extends Router {
 
   private async getYourMentees(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
 
     ctx.body = await this.userService.getYourMentees(user.uuid);
     ctx.status = 200;
@@ -211,23 +245,32 @@ export class UserController extends Router {
 
   private async getMentorMenteeRequests(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
 
     ctx.body = await this.userService.getMentorMenteeRequests(user.uuid);
     ctx.status = 200;
   }
 
   private async approveMenteeRequest(ctx: Context): Promise<void> {
-    const mentor: User = ctx.state.user;
+    const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
 
     ctx.body = await this.userService.approveMenteeRequest(
       ctx.params.uuid as string,
-      mentor,
+      user,
     );
     ctx.status = 200;
   }
 
   private async rejectMenteeRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
 
     ctx.body = await this.userService.rejectMenteeRequest(
       ctx.params.uuid as string,
@@ -239,6 +282,9 @@ export class UserController extends Router {
   private async becomeMentee(ctx: Context): Promise<void> {
     try {
       const user: User = ctx.state.user;
+      if (!user) {
+        ctx.throw(401, "Unauthorized");
+      }
       console.log(user);
       const { mentorUuid, motivation } = (await ctx.request.body) as {
         mentorUuid: string;
@@ -257,8 +303,24 @@ export class UserController extends Router {
   }
 
   private async getOneMentor(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
     const uuid = ctx.params.uuid;
     ctx.body = await this.userService.getOneMentor(uuid);
+    ctx.status = 200;
+  }
+
+  private async rateMentor(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
+    }
+    const uuid = ctx.params.uuid;
+    const rateRequest = ctx.request.body as RateMentorRequest;
+
+    await this.userService.rateMentor(uuid, rateRequest);
     ctx.status = 200;
   }
 }

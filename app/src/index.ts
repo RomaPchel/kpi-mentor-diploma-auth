@@ -10,6 +10,7 @@ import { UserController } from "./controllers/UserController.js";
 import { ErrorMiddleware } from "./middlewares/ErrorMiddleware.js";
 import { ChatController } from "./controllers/ChatController.js";
 import { EventController } from "./controllers/EventController.js";
+import { SpecialityController } from "./controllers/SpecialityController.js";
 
 const app = new Koa();
 const server: HTTPServer = createServer(app.callback());
@@ -52,6 +53,9 @@ app
 app
   .use(new EventController().routes())
   .use(new EventController().allowedMethods());
+app
+  .use(new SpecialityController().routes())
+  .use(new SpecialityController().allowedMethods());
 
 server.listen(3000, () => {
   console.log(`Auth server is running on port 3000`);

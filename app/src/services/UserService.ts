@@ -6,6 +6,7 @@ import type {
   BecomeMentorRequestResponse,
   CreateMentorRequest,
   MentorProfileResponse,
+  RateMentorRequest,
   UpdateMentorRequest,
   UserProfileResponse,
   UserProfileUpdateRequest,
@@ -109,16 +110,75 @@ export class UserService {
     return this.toMentorRequestResponse(request);
   }
 
-  async getAllMentors(userUuid?: string) {
-    const where = userUuid ? { mentor: { uuid: { $ne: userUuid } } } : {};
+  async getAllMentors(
+    filters: {
+      name?: string;
+      minRating?: number;
+      maxRating?: number;
+      minReviews?: number;
+      maxReviews?: number;
+    },
+    sorting: {
+      sortBy?: "name" | "rating" | "totalReviews";
+      sortOrder?: "asc" | "desc";
+    },
+  ) {
+    const where: any = {};
+
+    if (filters?.name) {
+      where.mentor = {
+        ...(where.mentor || {}),
+        $or: [
+          { firstName: { $ilike: `%${filters.name}%` } },
+          { lastName: { $ilike: `%${filters.name}%` } },
+        ],
+      };
+    }
+
+    if (filters?.minRating !== undefined) {
+      where.rating = { ...(where.rating || {}), $gte: filters.minRating };
+    }
+    if (filters?.maxRating !== undefined) {
+      where.rating = { ...(where.rating || {}), $lte: filters.maxRating };
+    }
+    if (filters?.minReviews !== undefined) {
+      where.totalReviews = { ...(where.totalReviews || {}), $gte: filters.minReviews };
+    }
+    if (filters?.maxReviews !== undefined) {
+      where.totalReviews = { ...(where.totalReviews || {}), $lte: filters.maxReviews };
+    }
 
     const mentors = await em.find(MentorProfile, where, {
       populate: ["mentor"],
     });
 
-    return mentors.map((mentorProfile) =>
+    let result = mentors.map((mentorProfile) =>
       this.toMentorProfileResponse(mentorProfile),
     );
+
+    const sortBy = sorting.sortBy ?? "name";
+    const sortOrder = sorting.sortOrder === "desc" ? -1 : 1;
+
+    result = result.sort((a, b) => {
+      let aValue, bValue;
+
+      if (sortBy === "name") {
+        aValue = a.name.toLowerCase() ?? "";
+        bValue = b.name.toLowerCase() ?? "";
+      } else if (sortBy === "rating") {
+        aValue = a.rating ?? 0;
+        bValue = b.rating ?? 0;
+      } else if (sortBy === "totalReviews") {
+        aValue = a.totalReviews ?? 0;
+        bValue = b.totalReviews ?? 0;
+      }
+
+      if (aValue! < bValue!) return -1 * sortOrder;
+      if (aValue! > bValue!) return 1 * sortOrder;
+      return 0;
+    });
+
+    return result;
   }
 
   async getYourMenteeRequest(mentorUuid: string, userUuid: string) {
@@ -288,5 +348,26 @@ export class UserService {
       rating: profile.rating,
       totalReviews: profile.totalReviews,
     };
+  }
+
+  async rateMentor(uuid: string, rateRequest: RateMentorRequest) {
+    const mentor = await em.findOne(
+      MentorProfile,
+      { uuid: uuid },
+      { populate: ["mentor"] },
+    );
+    if (mentor === null) {
+      throw new Error("Mentor not found");
+    }
+    if (mentor.rating < 0) {
+      mentor.rating = rateRequest.rating;
+      mentor.totalReviews++;
+      await em.persistAndFlush(mentor);
+    } else {
+      const sum = mentor.rating * mentor.totalReviews + rateRequest.rating;
+      mentor.rating = sum / (mentor.totalReviews + 1);
+      mentor.totalReviews++;
+      await em.persistAndFlush(mentor);
+    }
   }
 }

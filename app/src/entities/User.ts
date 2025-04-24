@@ -6,7 +6,7 @@ import {
   Collection,
   OneToMany, ManyToMany
 } from "@mikro-orm/core";
-import { UserRole } from "../enums/UserEnums.js";
+import { FormsOfEducation, UserRole } from "../enums/UserEnums.js";
 import bcrypt from "bcrypt";
 import { BaseEntity } from "./BaseEntity.js";
 import { UserChat } from "./chat/UserChat.js";
@@ -42,16 +42,19 @@ export class User extends BaseEntity {
   specializationCode!: number;
 
   @Property({ nullable: true })
-  specializationTitle!: string;
+  specializationTitle!: string
 
-  @Property({ nullable: true })
-  formOfEducation!: string;
+  @Enum(() => FormsOfEducation)
+  formOfEducation!: FormsOfEducation;
 
   @Property({ nullable: true })
   groupCode!: string;
 
   @Property({ nullable: true })
   department!: string;
+
+  @Property({ nullable: true })
+  course!: number;
 
   @Property({ nullable: true })
   interests!: string[];
