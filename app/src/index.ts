@@ -11,31 +11,9 @@ import { ErrorMiddleware } from "./middlewares/ErrorMiddleware.js";
 import { ChatController } from "./controllers/ChatController.js";
 import { EventController } from "./controllers/EventController.js";
 import { SpecialityController } from "./controllers/SpecialityController.js";
-import { SwaggerRouter } from "koa-swagger-decorator";
 
 const app = new Koa();
-const router = new SwaggerRouter();
 const server: HTTPServer = createServer(app.callback());
-
-router.swagger({
-  title: "My API",
-  description: "API documentation",
-  version: "1.0.0",
-  prefix: "/api",
-  swaggerHtmlEndpoint: "/swagger-html",
-  swaggerJsonEndpoint: "/swagger-json",
-});
-
-router.map(
-  [
-    AuthController,
-    UserController,
-    ChatController,
-    EventController,
-    SpecialityController,
-  ],
-  {},
-);
 
 await orm.getSchemaGenerator().updateSchema();
 app.use(
@@ -61,8 +39,6 @@ await orm.connect().then(() => {
 
 SocketSingleton.getInstance(server);
 console.log("Socket instance initialized");
-
-app.use(router.routes()).use(router.allowedMethods());
 
 app.use(ValidationMiddleware());
 app
