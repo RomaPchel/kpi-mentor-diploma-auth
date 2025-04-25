@@ -7,7 +7,7 @@ export const ValidationMiddleware = () => {
     try {
       if (ctx.method !== "GET") {
         console.log(ctx.request.url);
-        Validator.validateBody(ctx.request);
+        Validator.validateBody(ctx);
       }
       await next();
     } catch (e) {
