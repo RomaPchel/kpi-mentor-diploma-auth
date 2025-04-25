@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "npx swc --strip-leading-paths --config-file .swcrc ./src -d dist",
+    "postbuild": "copy .\\specialities.json .\\dist\\specialities.json",
     "prettier:format": "pnpm exec prettier . --write",
     "prettier:check": "npx prettier . --check\n",
     "docker:up": "docker compose -f ../docker/compose.yaml up -d",
@@ -26,6 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "kpi-diploma-typescript-core": "1.0.2",
     "socket.io": "^4.8.1",
+    "swagger-ui-koa": "^0.0.1",
     "ts-jest": "^29.3.2",
     "uuid": "^11.0.5",
     "zod": "^3.24.1"

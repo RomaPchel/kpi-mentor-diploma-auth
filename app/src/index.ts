@@ -4,13 +4,15 @@ import koabodyparser from "koa-bodyparser";
 import { AuthController } from "./controllers/AuthController.js";
 import cors from "@koa/cors";
 import SocketSingleton from "./Utils/Socket.js";
-import { Server as HTTPServer, createServer } from "http";
+import { createServer, Server as HTTPServer } from "http";
 import { ValidationMiddleware } from "./middlewares/ValidationMiddleware.js";
 import { UserController } from "./controllers/UserController.js";
 import { ErrorMiddleware } from "./middlewares/ErrorMiddleware.js";
 import { ChatController } from "./controllers/ChatController.js";
 import { EventController } from "./controllers/EventController.js";
 import { SpecialityController } from "./controllers/SpecialityController.js";
+import { MentorController } from "./controllers/MentorController.js";
+import { MenteeController } from "./controllers/MenteeController.js";
 
 const app = new Koa();
 const server: HTTPServer = createServer(app.callback());
@@ -45,6 +47,12 @@ app
 app
   .use(new UserController().routes())
   .use(new UserController().allowedMethods());
+app
+  .use(new MentorController().routes())
+  .use(new MentorController().allowedMethods());
+app
+  .use(new MenteeController().routes())
+  .use(new MenteeController().allowedMethods());
 app
   .use(new ChatController().routes())
   .use(new ChatController().allowedMethods());
