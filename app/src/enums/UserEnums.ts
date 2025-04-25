@@ -5,8 +5,8 @@ export enum UserRole {
 }
 
 export enum FormsOfEducation {
-  OFFLINE = "offline",
-  ONLINE = "online",
+  PART_TIME = "part-time",
+  FULL_TIME = "full-time",
 }
 
 export enum TokenExpiration {

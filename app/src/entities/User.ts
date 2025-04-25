@@ -4,7 +4,8 @@ import {
   Enum,
   BeforeCreate,
   Collection,
-  OneToMany, ManyToMany
+  OneToMany,
+  ManyToMany,
 } from "@mikro-orm/core";
 import { FormsOfEducation, UserRole } from "../enums/UserEnums.js";
 import bcrypt from "bcrypt";
@@ -42,10 +43,10 @@ export class User extends BaseEntity {
   specializationCode!: number;
 
   @Property({ nullable: true })
-  specializationTitle!: string
+  specializationTitle!: string;
 
   @Enum(() => FormsOfEducation)
-  formOfEducation!: FormsOfEducation;
+  formOfEducation?: FormsOfEducation;
 
   @Property({ nullable: true })
   groupCode!: string;
