@@ -8,7 +8,7 @@ import { User } from "../entities/User.js";
 import { em } from "../db/config.js";
 import { compare } from "bcrypt";
 import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
-import { TokenExpiration } from "../enums/UserEnums.js";
+import { FormsOfEducation, TokenExpiration } from "../enums/UserEnums.js";
 
 export class AuthenticationUtil {
   public static readonly ACCESS_SECRET = process.env
@@ -36,12 +36,14 @@ export class AuthenticationUtil {
     newUser.password = body.password; //hashed before creating via @BeforeCreate
     newUser.specializationCode = body.specializationCode;
     newUser.specializationTitle = body.specializationTitle;
-    newUser.formOfEducation = body.formOfEducation;
+    newUser.formOfEducation = FormsOfEducation.FULL_TIME;
     newUser.groupCode = body.groupCode;
     newUser.department = body.department;
     newUser.course = body.course;
 
     await em.persist(newUser).flush();
+
+    return this.login({ email: body.email, password: body.password });
   }
 
   public static verifyRefreshToken(refreshToken: string) {

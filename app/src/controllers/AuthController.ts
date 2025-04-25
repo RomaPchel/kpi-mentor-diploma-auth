@@ -51,9 +51,7 @@ export class AuthController extends Router {
     const body: RegistrationRequestBody = ctx.request
       .body as RegistrationRequestBody;
 
-    await AuthenticationUtil.register(body);
-
-    ctx.body = "Success";
+    ctx.body = await AuthenticationUtil.register(body);
     ctx.status = 201;
   }
 }

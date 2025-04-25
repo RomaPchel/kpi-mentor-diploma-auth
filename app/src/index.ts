@@ -17,7 +17,6 @@ import { MenteeController } from "./controllers/MenteeController.js";
 const app = new Koa();
 const server: HTTPServer = createServer(app.callback());
 
-await orm.getSchemaGenerator().updateSchema();
 app.use(
   cors({
     origin: (ctx) => {
@@ -38,7 +37,6 @@ app.use(koabodyparser());
 await orm.connect().then(() => {
   console.log("Database has connected!");
 });
-
 SocketSingleton.getInstance(server);
 console.log("Socket instance initialized");
 
@@ -68,4 +66,3 @@ app
 server.listen(3000, () => {
   console.log(`Auth server is running on port 3000`);
 });
-await orm.getSchemaGenerator().updateSchema();
