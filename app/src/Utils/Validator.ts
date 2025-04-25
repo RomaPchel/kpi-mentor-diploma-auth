@@ -1,75 +1,68 @@
-import { z } from "zod";
-import type { Request } from "koa";
+import { match } from "path-to-regexp";
+import type { Context } from "koa";
+import type { MatchFunction } from "path-to-regexp";
+import { ZodSchema } from "zod";
+import {
+  LoginRequestSchema,
+  RegistrationRequestSchema,
+} from "../schemas/ZodSchemas.js";
 
-export const RegistrationRequestSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters long" }),
-});
+type SchemaEntry = {
+  pattern: string;
+  matcher: MatchFunction<Record<string, string>>;
+  schema: ZodSchema<any>;
+};
 
-export const LoginRequestSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters long" }),
-});
-
-export const BecomeMentorRequestSchema = z.object({
-  motivation: z
-    .string()
-    .min(32, { message: "Motivation should be at least 32 characters long" }),
-});
-
-export const UUIDParamSchema = z.object({
-  chatId: z.string().uuid({ message: "Invalid chat ID format" }),
-});
-
-export const MentorRequestParamSchema = z.object({
-  id: z.string().uuid({ message: "Invalid request ID format" }),
-});
-
-export type RegistrationRequestBody = z.infer<typeof RegistrationRequestSchema>;
+const schemaMap: SchemaEntry[] = [
+  {
+    pattern: "/api/auth/register",
+    matcher: match("/api/auth/register", { decode: decodeURIComponent }),
+    schema: RegistrationRequestSchema,
+  },
+  {
+    pattern: "/api/auth/login",
+    matcher: match("/api/auth/login", { decode: decodeURIComponent }),
+    schema: LoginRequestSchema,
+  },
+];
 
 export class Validator {
-  public static validateBody(request: Request): void {
-    switch (request.url) {
-      case "/api/auth/register":
-        RegistrationRequestSchema.parse(request.body);
-        break;
-      case "/api/auth/login":
-        LoginRequestSchema.parse(request.body);
-        break;
-      case "/api/user/become-mentor-request":
-        BecomeMentorRequestSchema.parse(request.body);
-        break;
-      default:
-        if (Object.keys(request.body || {}).length > 0) {
-          console.warn(`No body validation defined for ${request.url}`);
-        }
+  private static findSchema(path: string) {
+    for (const entry of schemaMap) {
+      const matched = entry.matcher(path);
+      if (matched) {
+        return { schema: entry.schema, params: matched.params };
+      }
     }
+    return null;
   }
 
-  public static validateParams(
-    url: string,
-    params: Record<string, string>,
-  ): void {
-    const urlPattern = url.replace(
-      /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(\/|$)/g,
-      "/:id$1",
-    );
+  public static validateBody(ctx: Context) {
+    const path = ctx.request.path;
+    const hit = this.findSchema(path);
+    if (!hit) {
+      throw new Error(`No validation schema defined for URL ${path}`);
+    }
+    hit.schema.parse((ctx.request as any).body);
+  }
 
-    console.log(`Validating params for pattern: ${urlPattern}`);
+  public static validateQuery(ctx: Context) {
+    const path = ctx.request.path;
+    const hit = this.findSchema(path);
+    if (!hit) {
+      throw new Error(`No validation schema defined for URL ${path}`);
+    }
+    hit.schema.parse(ctx.request.query);
+  }
 
-    if (url.match(/^\/api\/chat\/[^/]+$/)) {
-      UUIDParamSchema.parse(params);
-    } else if (url.match(/^\/api\/chat\/[^/]+\/read$/)) {
-      UUIDParamSchema.parse(params);
-    } else if (url.match(/^\/api\/auth\/refresh\/[^/]+$/)) {
-      console.log("here");
-      UUIDParamSchema.parse(params);
-    } else if (url.match(/^\/api\/user\/become-mentor-request\/[^/]+$/)) {
-      MentorRequestParamSchema.parse(params);
+  public static validateRequest(ctx: Context) {
+    // body for non‑GET
+    if (ctx.request.method !== "GET") {
+      this.validateBody(ctx);
+    }
+    // query if any
+    if (ctx.request.querystring) {
+      this.validateQuery(ctx);
     }
   }
 }
