@@ -32,6 +32,7 @@ app.use(
 );
 
 app.use(ErrorMiddleware());
+app.use(ValidationMiddleware());
 app.use(koabodyparser());
 
 await orm.connect().then(() => {
