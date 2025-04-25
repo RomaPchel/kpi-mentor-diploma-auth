@@ -38,6 +38,9 @@ importers:
       kpi-diploma-typescript-core:
         specifier: 1.0.2
         version: 1.0.2
+      path-to-regexp:
+        specifier: ^8.2.0
+        version: 8.2.0
       socket.io:
         specifier: ^4.8.1
         version: 4.8.1
