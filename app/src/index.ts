@@ -38,7 +38,6 @@ app.use(koabodyparser());
 await orm.connect().then(() => {
   console.log("Database has connected!");
 });
-
 SocketSingleton.getInstance(server);
 console.log("Socket instance initialized");
 
