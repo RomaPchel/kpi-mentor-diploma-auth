@@ -22,7 +22,7 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
     "allowJs": false,
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,

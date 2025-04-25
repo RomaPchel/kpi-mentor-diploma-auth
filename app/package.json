@@ -12,9 +12,16 @@
     "build:all": "npm run build && npm run generate:dts",
     "start": "node --env-file .env --experimental-specifier-resolution=node dist/index.js",
     "watch": "pnpm docker:up & npx nodemon --config ./nodemon.json",
-    "start:dev": "npm run watch"
+    "start:dev": "npm run watch",
+    "test": "pnpm build && npx concurrently --kill-others --success first 'pnpm test:serve' 'pnpm test:jest:no-build'",
+    "test:coverage": "pnpm build && pnpm test:setup & npx concurrently --kill-others --success first 'pnpm test:serve' 'pnpm test:jest:no-build --coverage'",
+    "test:verbose": "cross-env DEBUG=@nyce:*,@NYCE:* pnpm test",
+    "test:jest": "pnpm build && pnpm test:jest:no-build",
+    "test:jest:no-build": "cross-env TEST_RUN=true NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:serve": "pnpm start --test-run"
   },
   "dependencies": {
+    "@jest/globals": "^29.7.0",
     "@koa/cors": "^5.0.0",
     "@mikro-orm/core": "^6.4.3",
     "@mikro-orm/postgresql": "^6.4.3",
@@ -22,6 +29,7 @@
     "axios": "^1.8.4",
     "cheerio": "^1.0.0",
     "class-validator": "^0.14.1",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
     "kpi-diploma-typescript-core": "1.0.2",
@@ -29,6 +37,7 @@
     "socket.io": "^4.8.1",
     "swagger-ui-koa": "^0.0.1",
     "ts-jest": "^29.3.2",
+    "ts-node": "^10.9.2",
     "uuid": "^11.0.5",
     "zod": "^3.24.1"
   },

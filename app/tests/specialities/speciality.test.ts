@@ -1,10 +1,9 @@
-// tests/specialities/speciality.test.ts
-import { jest } from '@jest/globals';
-import * as fs from 'fs';
-import { SpecialityRepository } from "../../src/repositories/SpecialityRepository.js";
-import type { Speciality } from "../../src/interfaces/SpecialityInterfaces.js";
+import { jest } from "@jest/globals";
+import { readFileSync } from "fs";
+import type { Speciality } from "../../src/interfaces/SpecialityInterfaces";
+import { SpecialityRepository } from "../../src/repositories/SpecialityRepository";
 
-describe('SpecialityRepository', () => {
+describe("SpecialityRepositoryTest", () => {
   const mockSpecialities: Speciality[] = [
     {
       name: "Computer Science",
@@ -21,18 +20,24 @@ describe('SpecialityRepository', () => {
   ];
 
   beforeEach(() => {
-    jest.spyOn(fs, 'readFileSync').mockReturnValue(JSON.stringify(mockSpecialities));
+    // Clear all mocks before each test
+    jest.clearAllMocks();
+
+    // Mock readFileSync
+    jest
+      .spyOn({ readFileSync }, "readFileSync")
+      .mockReturnValue(JSON.stringify(mockSpecialities));
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  it('should return all specialities from the file', () => {
+  it("should return all specialities from the file", () => {
     const repo = new SpecialityRepository();
     const result = repo.getAllSpecialities();
 
-    expect(fs.readFileSync).toHaveBeenCalled();
+    expect(readFileSync).toHaveBeenCalled();
     expect(result).toEqual(mockSpecialities);
   });
 });
