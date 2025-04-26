@@ -1,10 +1,10 @@
-import { MenteeRepository } from "../../src/repositories/MenteeRepository.js";
-import { BecomeMenteeRequest } from "../../src/entities/BecomeManteeRequest.js";
-import { MentorStudent } from "../../src/entities/StudentMentor.js";
-import { em } from "../../src/db/config.js";
-import { MentorRequestStatus } from "../../src/enums/UserEnums.js";
+import { MenteeRepository } from "../../src/repositories/MenteeRepository";
+import { BecomeMenteeRequest } from "../../src/entities/BecomeManteeRequest";
+import { MentorStudent } from "../../src/entities/StudentMentor";
+import { em } from "../../src/db/config";
+import { MentorRequestStatus } from "../../src/enums/UserEnums";
 
-jest.mock("../../src/db/config.js", () => ({
+jest.mock("../../src/db/config", () => ({
   em: {
     find: jest.fn(),
     findOneOrFail: jest.fn(),

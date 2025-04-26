@@ -1,11 +1,11 @@
-import { MentorRepository } from "../../src/repositories/MentorRepository.js";
-import { MentorProfile } from "../../src/entities/MentorProfile.js";
-import { BecomeMentorRequest } from "../../src/entities/BecomeMentorRequest.js";
-import { em } from "../../src/db/config.js";
-import { MentorRequestStatus, UserRole } from "../../src/enums/UserEnums.js";
-import { User } from "../../src/entities/User.js";
+import { MentorRepository } from "../../src/repositories/MentorRepository";
+import { MentorProfile } from "../../src/entities/MentorProfile";
+import { BecomeMentorRequest } from "../../src/entities/BecomeMentorRequest";
+import { em } from "../../src/db/config";
+import { MentorRequestStatus, UserRole } from "../../src/enums/UserEnums";
+import { User } from "../../src/entities/User";
 
-jest.mock("../../src/db/config.js", () => {
+jest.mock("../../src/db/config", () => {
   return {
     em: {
       persistAndFlush: jest.fn(),

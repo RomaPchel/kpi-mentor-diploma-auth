@@ -1,7 +1,7 @@
-import { EventRepository } from "../../src/repositories/EventRepository.js";
-import { Event } from "../../src/entities/Event.js";
+import { EventRepository } from "../../src/repositories/EventRepository";
+import { Event } from "../../src/entities/Event";
 
-jest.mock("../../src/db/config.js", () => {
+jest.mock("../../src/db/config", () => {
   return {
     em: {
       persistAndFlush: jest.fn(),
@@ -11,7 +11,7 @@ jest.mock("../../src/db/config.js", () => {
   };
 });
 
-import { em } from "../../src/db/config.js";  // after jest.mock
+import { em } from "../../src/db/config";  // after jest.mock
 
 describe("EventRepository", () => {
   let repo: EventRepository;
