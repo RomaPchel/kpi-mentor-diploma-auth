@@ -21,7 +21,7 @@ export interface UserProfileUpdateRequest {
   bio?: string;
   specializationCode?: number;
   specializationTitle?: string;
-  formOfEducation: FormsOfEducation;
+  formOfEducation?: FormsOfEducation;
   groupCode?: string;
   department?: string;
   interests?: string[];

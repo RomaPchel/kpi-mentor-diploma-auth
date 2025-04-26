@@ -1,19 +1,21 @@
 import { Event } from "../entities/Event.js";
 import { User } from "../entities/User.js";
 import { EventStatus } from "../enums/EventEnums.js";
-import { em } from "../db/config.js";
 import type {
   CreateEventRequest,
   EventResponse,
   UpdateEventRequest,
 } from "../interfaces/EventInterfaces.js";
 import { EventRepository } from "../repositories/EventRepository.js";
+import { UserRepository } from "../repositories/UserRepository.js";
 
 export class EventService {
   private readonly eventRepository: EventRepository;
+  private readonly userRepository = new UserRepository();
 
   constructor() {
     this.eventRepository = new EventRepository();
+    this.userRepository = new UserRepository();
   }
 
   async createEvent(req: CreateEventRequest, owner: User) {
@@ -24,7 +26,7 @@ export class EventService {
     event.owner = owner;
     event.status = EventStatus.PLANNED;
 
-    const users = await em.find(User, { uuid: { $in: participants || [] } });
+    const users = await this.userRepository.getAllUsersByIds(participants);
     event.participants.set(users);
 
     event.timestamp = new Date(timestamp);
@@ -60,9 +62,9 @@ export class EventService {
     if (updateData.timestamp) event.timestamp = new Date(updateData.timestamp);
 
     if (updateData.participants) {
-      const participantUsers = await em.find(User, {
-        uuid: { $in: updateData.participants },
-      });
+      const participantUsers = await this.userRepository.getAllUsersByIds(
+        updateData.participants,
+      );
       event.participants.set(participantUsers);
     }
 

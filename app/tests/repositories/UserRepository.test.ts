@@ -7,6 +7,7 @@ jest.mock("../../src/db/config", () => {
     em: {
       persistAndFlush: jest.fn(),
       findOneOrFail: jest.fn(),
+      find: jest.fn(),
     },
   };
 });
@@ -32,5 +33,19 @@ describe("UserRepository", () => {
     const result = await repo.getUserById("1234");
     expect(em.findOneOrFail).toHaveBeenCalledWith(User, { uuid: "1234" });
     expect(result).toBe(user);
+  });
+
+  it("should find all users by ids", async () => {
+    const user1 = new User();
+    user1.uuid = "id1";
+    const user2 = new User();
+    user2.uuid = "id2";
+
+    (em.find as jest.Mock).mockResolvedValue([user1, user2]);
+
+    const result = await repo.getAllUsersByIds(["id1", "id2"]);
+
+    expect(em.find).toHaveBeenCalledWith(User, { uuid: { $in: ["id1", "id2"] } });
+    expect(result).toEqual([user1, user2]);
   });
 });

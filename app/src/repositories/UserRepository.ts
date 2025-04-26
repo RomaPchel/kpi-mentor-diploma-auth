@@ -13,4 +13,8 @@ export class UserRepository {
   async getUserById(userId: string) {
     return await em.findOneOrFail(User, { uuid: userId });
   }
+
+  async getAllUsersByIds(userIds: string[]) {
+    return await em.find(User, { uuid: { $in: userIds } });
+  }
 }
