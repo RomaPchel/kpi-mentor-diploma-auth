@@ -28,7 +28,7 @@ export class SpecialityController extends Router {
       if (!user) {
         ctx.throw(401, "Unauthorized");
       }
-      const events = this.specialityService.getAllSpecialities();
+      const events = this.specialityService.getAll();
       ctx.status = 200;
       ctx.body = events;
     } catch (e: unknown) {

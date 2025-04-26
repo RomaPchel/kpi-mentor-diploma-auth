@@ -54,6 +54,19 @@ export interface BecomeMentorRequestResponse {
   };
 }
 
+export interface BecomeMenteeRequestResponse {
+  id: string;
+  motivation: string;
+  status: MentorRequestStatus;
+  createdAt: Date;
+  user: {
+    uuid: string;
+    name: string;
+    email: string;
+    avatar: string;
+  };
+}
+
 export interface MentorProfileResponse {
   uuid: string;
   name: string;

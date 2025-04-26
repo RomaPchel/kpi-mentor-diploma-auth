@@ -53,7 +53,7 @@ export class MenteeController extends Router {
       ctx.throw(401, "Unauthorized");
     }
 
-    ctx.body = await this.menteeService.getYourMentees(user.uuid);
+    ctx.body = await this.menteeService.getAllMenteesByUser(user.uuid);
     ctx.status = 200;
   }
 
@@ -63,7 +63,7 @@ export class MenteeController extends Router {
       ctx.throw(401, "Unauthorized");
     }
 
-    ctx.body = await this.menteeService.getMentorMenteeRequests(user.uuid);
+    ctx.body = await this.menteeService.getRequestsByUser(user.uuid);
     ctx.status = 200;
   }
 
@@ -73,7 +73,7 @@ export class MenteeController extends Router {
       ctx.throw(401, "Unauthorized");
     }
 
-    ctx.body = await this.menteeService.approveMenteeRequest(
+    ctx.body = await this.menteeService.approveRequest(
       ctx.params.uuid as string,
       user,
     );
@@ -86,7 +86,7 @@ export class MenteeController extends Router {
       ctx.throw(401, "Unauthorized");
     }
 
-    ctx.body = await this.menteeService.rejectMenteeRequest(
+    ctx.body = await this.menteeService.rejectRequest(
       ctx.params.uuid as string,
       user.uuid,
     );

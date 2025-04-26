@@ -71,7 +71,7 @@ export class MentorController extends Router {
     const motivation = ctx.request.body as CreateMentorRequest;
 
     const existingRequest =
-      await this.mentorService.getOwnBecomeMentorRequest(user);
+      await this.mentorService.getOneRequestByUser(user);
     if (existingRequest) {
       ctx.throw(400, "You already have a pending request.");
     }
@@ -86,7 +86,7 @@ export class MentorController extends Router {
   private async getOwnBecomeMentorRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
-    ctx.body = await this.mentorService.getOwnBecomeMentorRequest(user);
+    ctx.body = await this.mentorService.getOneRequestByUser(user);
     ctx.status = 200;
   }
 
@@ -96,7 +96,7 @@ export class MentorController extends Router {
       ctx.throw(401, "Unauthorized");
     }
 
-    ctx.body = await this.mentorService.getAllBecomeMentorRequests();
+    ctx.body = await this.mentorService.getAllRequests();
     ctx.status = 200;
   }
 
@@ -105,7 +105,7 @@ export class MentorController extends Router {
 
     const id = ctx.params.id;
 
-    ctx.body = await this.mentorService.getBecomeMentorRequestById(user, id);
+    ctx.body = await this.mentorService.getOneRequestById(user, id);
     ctx.status = 200;
   }
 
@@ -119,7 +119,7 @@ export class MentorController extends Router {
 
     const request = ctx.request.body as UpdateMentorRequest;
 
-    ctx.body = await this.mentorService.updateBecomeMentorRequest(id, request);
+    ctx.body = await this.mentorService.updateRequest(id, request);
     ctx.status = 200;
   }
 

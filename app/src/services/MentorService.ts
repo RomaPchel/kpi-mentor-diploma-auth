@@ -1,7 +1,8 @@
 import { User } from "../entities/User.js";
 import { MentorProfile } from "../entities/MentorProfile.js";
-import { em } from "../db/config.js";
 import { MentorRequestStatus, UserRole } from "../enums/UserEnums.js";
+import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
+import { MentorRepository } from "../repositories/MentorRepository.js";
 import type {
   BecomeMentorRequestResponse,
   CreateMentorRequest,
@@ -9,17 +10,18 @@ import type {
   RateMentorRequest,
   UpdateMentorRequest,
 } from "../interfaces/UserInterface.js";
-import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 
 /**
  * A service class that manages mentor-related operations, including creating,
  * updating, and retrieving mentor requests and profiles, as well as rating mentors.
  */
 export class MentorService {
+  private readonly repo = new MentorRepository();
+
   async createBecomeMentorRequest(user: User, req: CreateMentorRequest) {
-    const existingRequest = await em.findOne(BecomeMentorRequest, {
-      user: user.uuid,
-    });
+    const existingRequest = await this.repo.findBecomeMentorRequestByUser(
+      user.uuid,
+    );
     if (existingRequest) {
       throw new Error("You already have a pending request.");
     }
@@ -29,35 +31,23 @@ export class MentorService {
     request.motivation = req.motivation ?? null;
     request.status = MentorRequestStatus.PENDING;
 
-    await em.persistAndFlush(request);
+    await this.repo.saveBecomeMentorRequest(request);
 
     return this.toMentorRequestResponse(request);
   }
 
-  async getOwnBecomeMentorRequest(user: User) {
-    const request = await em.findOne(
-      BecomeMentorRequest,
-      { user: user.uuid },
-      { populate: ["user"] },
-    );
+  async getOneRequestByUser(user: User) {
+    const request = await this.repo.findBecomeMentorRequestByUser(user.uuid);
     return request ? this.toMentorRequestResponse(request) : null;
   }
 
-  async getAllBecomeMentorRequests() {
-    const requests = await em.find(
-      BecomeMentorRequest,
-      {},
-      { populate: ["user"] },
-    );
+  async getAllRequests() {
+    const requests = await this.repo.findAllBecomeMentorRequests();
     return requests.map(this.toMentorRequestResponse);
   }
 
-  async getBecomeMentorRequestById(user: User, id: string) {
-    const request = await em.findOne(
-      BecomeMentorRequest,
-      { uuid: id },
-      { populate: ["user"] },
-    );
+  async getOneRequestById(user: User, id: string) {
+    const request = await this.repo.findBecomeMentorRequestById(id);
     if (!request) throw new Error("Mentor request not found.");
     if (user.role !== UserRole.ADMIN && request.user.uuid !== user.uuid) {
       throw new Error("Forbidden");
@@ -65,12 +55,8 @@ export class MentorService {
     return this.toMentorRequestResponse(request);
   }
 
-  async updateBecomeMentorRequest(id: string, data: UpdateMentorRequest) {
-    const request = await em.findOne(
-      BecomeMentorRequest,
-      { uuid: id },
-      { populate: ["user"] },
-    );
+  async updateRequest(id: string, data: UpdateMentorRequest) {
+    const request = await this.repo.findBecomeMentorRequestById(id);
     if (!request) throw new Error("Mentor request not found.");
 
     if (data.status === MentorRequestStatus.APPROVED) {
@@ -78,13 +64,13 @@ export class MentorService {
       mentorProfile.mentor = request.user;
       mentorProfile.rating = -1;
       mentorProfile.totalReviews = 0;
-      await em.persistAndFlush(mentorProfile);
+      await this.repo.saveMentorProfile(mentorProfile);
     }
 
     if (data.status) request.status = data.status;
     if (data.motivation) request.motivation = data.motivation;
 
-    await em.persistAndFlush(request);
+    await this.repo.saveBecomeMentorRequest(request);
 
     return this.toMentorRequestResponse(request);
   }
@@ -133,9 +119,7 @@ export class MentorService {
       };
     }
 
-    const mentors = await em.find(MentorProfile, where, {
-      populate: ["mentor"],
-    });
+    const mentors = await this.repo.findAllMentorProfiles(where);
 
     let result = mentors.map((mentorProfile) =>
       this.toMentorProfileResponse(mentorProfile),
@@ -170,26 +154,15 @@ export class MentorService {
   }
 
   async getOneMentor(uuid: string) {
-    const mentor = await em.findOne(
-      MentorProfile,
-      { uuid: uuid },
-      { populate: ["mentor"] },
-    );
-
-    console.log(mentor);
-    return this.toMentorProfileResponse(mentor as MentorProfile);
+    const mentor = await this.repo.findMentorProfileById(uuid);
+    if (!mentor) throw new Error("Mentor not found");
+    return this.toMentorProfileResponse(mentor);
   }
 
   async deleteById(id: string) {
-    const request = await em.findOne(
-      BecomeMentorRequest,
-      { uuid: id },
-      { populate: ["user"] },
-    );
-    if (!request) {
-      throw Error("Mentor request not found.");
-    }
-    await em.removeAndFlush(request);
+    const request = await this.repo.findBecomeMentorRequestById(id);
+    if (!request) throw new Error("Mentor request not found.");
+    await this.repo.removeBecomeMentorRequest(request);
   }
 
   private toMentorRequestResponse(
@@ -226,23 +199,18 @@ export class MentorService {
   }
 
   async rateMentor(uuid: string, rateRequest: RateMentorRequest) {
-    const mentor = await em.findOne(
-      MentorProfile,
-      { uuid: uuid },
-      { populate: ["mentor"] },
-    );
-    if (mentor === null) {
-      throw new Error("Mentor not found");
-    }
+    const mentor = await this.repo.findMentorProfileById(uuid);
+    if (!mentor) throw new Error("Mentor not found");
+
     if (mentor.rating < 0) {
       mentor.rating = rateRequest.rating;
       mentor.totalReviews++;
-      await em.persistAndFlush(mentor);
     } else {
       const sum = mentor.rating * mentor.totalReviews + rateRequest.rating;
       mentor.rating = sum / (mentor.totalReviews + 1);
       mentor.totalReviews++;
-      await em.persistAndFlush(mentor);
     }
+
+    await this.repo.saveMentorProfile(mentor);
   }
 }

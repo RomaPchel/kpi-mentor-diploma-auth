@@ -9,7 +9,7 @@ export class SpecialityService {
     this.specialityRepository = new SpecialityRepository(resolve("specialities.json"));
   }
 
-  getAllSpecialities(): Speciality[] {
+  getAll(): Speciality[] {
     return this.specialityRepository.getAllSpecialities();
   }
 }
