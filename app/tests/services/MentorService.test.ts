@@ -22,6 +22,7 @@ jest.mock("../../src/repositories/MentorRepository", () => {
       findMentorProfileById: jest.fn(),
       findAllMentorProfiles: jest.fn(),
       saveMentorProfile: jest.fn(),
+      removeBecomeMentorRequest: jest.fn(),
     })),
   };
 });
@@ -164,6 +165,96 @@ describe("MentorService", () => {
 
     const result = await service.getOneRequestById(user, "request-id");
     expect(result.id).toBe("request-id");
+  });
+
+  it("should return one request by User", async () => {
+    const user = new User();
+    user.uuid = "admin-uuid";
+    user.role = UserRole.ADMIN;
+
+    const request = new BecomeMentorRequest();
+    request.uuid = "request-id";
+    request.user = user;
+
+    mockRepo.findBecomeMentorRequestByUser.mockResolvedValue(request);
+
+    const result = await service.getOneRequestByUser(user);
+    expect(result).not.toBeNull();
+  });
+
+  it("should throw if mentor is not found", async () => {
+    mockRepo.findMentorProfileById.mockResolvedValue(null);
+
+    await expect(service.getOneMentor("not-found")).rejects.toThrow("Mentor not found");
+  });
+
+  it("should delete mentor request by id", async () => {
+    const request = new BecomeMentorRequest();
+    request.uuid = "request-id";
+    mockRepo.findBecomeMentorRequestById.mockResolvedValue(request);
+
+    await service.deleteById("request-id");
+
+    expect(mockRepo.findBecomeMentorRequestById).toHaveBeenCalledWith("request-id");
+    expect(mockRepo.removeBecomeMentorRequest).toHaveBeenCalledWith(request);
+  });
+
+  it("should throw if mentor request is not found", async () => {
+    mockRepo.findBecomeMentorRequestById.mockResolvedValue(null);
+
+    await expect(service.deleteById("invalid-id")).rejects.toThrow("Mentor request not found.");
+  });
+
+  it("should rate a mentor with no previous rating", async () => {
+    const mentor = new MentorProfile();
+    mentor.uuid = "mentor-id";
+    mentor.rating = -1;
+    mentor.totalReviews = 0;
+    mockRepo.findMentorProfileById.mockResolvedValue(mentor);
+
+    await service.rateMentor("mentor-id", { rating: 5 });
+
+    expect(mentor.rating).toBe(5);
+    expect(mentor.totalReviews).toBe(1);
+    expect(mockRepo.saveMentorProfile).toHaveBeenCalledWith(mentor);
+  });
+
+  it("should update rating of a mentor with existing reviews", async () => {
+    const mentor = new MentorProfile();
+    mentor.uuid = "mentor-id";
+    mentor.rating = 4;
+    mentor.totalReviews = 2;
+    mockRepo.findMentorProfileById.mockResolvedValue(mentor);
+
+    await service.rateMentor("mentor-id", { rating: 5 });
+
+    const expectedRating = (4 * 2 + 5) / 3;
+    expect(mentor.rating).toBeCloseTo(expectedRating);
+    expect(mentor.totalReviews).toBe(3);
+    expect(mockRepo.saveMentorProfile).toHaveBeenCalledWith(mentor);
+  });
+
+  it("should throw if mentor is not found when rating", async () => {
+    mockRepo.findMentorProfileById.mockResolvedValue(null);
+
+    await expect(service.rateMentor("invalid-id", { rating: 5 })).rejects.toThrow("Mentor not found");
+  });
+
+
+
+  it("should return mentor profile by uuid", async () => {
+    const user = new User();
+    user.uuid = "admin-uuid";
+    user.role = UserRole.ADMIN;
+    const mentor = new MentorProfile();
+    mentor.uuid = "mentor-uuid";
+    mentor.mentor = user;
+    mockRepo.findMentorProfileById.mockResolvedValue(mentor);
+
+    const result = await service.getOneMentor("mentor-uuid");
+
+    expect(mockRepo.findMentorProfileById).toHaveBeenCalledWith("mentor-uuid");
+    expect(result.uuid).toBe("mentor-uuid");
   });
 
   it("should forbid access to request by ID for non-admin if not owner", async () => {
