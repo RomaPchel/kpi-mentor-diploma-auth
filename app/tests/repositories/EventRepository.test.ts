@@ -6,12 +6,13 @@ jest.mock("../../src/db/config", () => {
     em: {
       persistAndFlush: jest.fn(),
       findOne: jest.fn(),
-      findAll: jest.fn(),
+      find: jest.fn(),
     },
   };
 });
 
-import { em } from "../../src/db/config";  // after jest.mock
+import { em } from "../../src/db/config";
+import { EventStatus } from "../../src/enums/EventEnums";  // after jest.mock
 
 describe("EventRepository", () => {
   let repo: EventRepository;
@@ -38,10 +39,18 @@ describe("EventRepository", () => {
 
   it("should find all events", async () => {
     const expectedEvents = [new Event(), new Event()];
-    (em.findAll as jest.Mock).mockResolvedValue(expectedEvents);
+    (em.find as jest.Mock).mockResolvedValue(expectedEvents);
 
-    const result = await repo.findAll();
-    expect(em.findAll).toHaveBeenCalledWith(Event, { populate: ["participants"] });
+    const whereCondition = { status: EventStatus.PLANNED };
+
+    const result = await repo.findAll(whereCondition);
+
+    expect(em.find).toHaveBeenCalledWith(
+      Event,
+      whereCondition,
+      { populate: ["participants"] }
+    );
+
     expect(result).toBe(expectedEvents);
   });
 });

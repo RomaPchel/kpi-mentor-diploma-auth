@@ -10,11 +10,11 @@ import { EventRepository } from "../repositories/EventRepository.js";
 import { UserRepository } from "../repositories/UserRepository.js";
 
 export class EventService {
-  private readonly eventRepository: EventRepository;
+  private readonly repo: EventRepository;
   private readonly userRepository = new UserRepository();
 
   constructor() {
-    this.eventRepository = new EventRepository();
+    this.repo = new EventRepository();
     this.userRepository = new UserRepository();
   }
 
@@ -31,28 +31,82 @@ export class EventService {
 
     event.timestamp = new Date(timestamp);
 
-    await this.eventRepository.save(event);
+    await this.repo.save(event);
 
     return this.toEventResponse(event);
   }
 
   async getEventById(eventId: string) {
-    const event = await this.eventRepository.findById(eventId);
+    const event = await this.repo.findById(eventId);
     if (!event) {
       throw new Error("Event not found");
     }
     return this.toEventResponse(event);
   }
 
-  async getAllEvents() {
-    const events = await this.eventRepository.findAll();
-    return events.map((event) => {
-      return this.toEventResponse(event);
+  async getAllEvents(
+    filters: {
+      userIds?: string[];
+      status?: EventStatus;
+      minTimestamp?: string;
+      maxTimeStamp?: string;
+    },
+    sorting: {
+      sortBy?: "status";
+      sortOrder?: "asc" | "desc";
+    },
+  ) {
+    const where: any = {};
+
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    if (filters?.minTimestamp) {
+      where.timestamp = {
+        ...(where.timestamp || {}),
+        $gte: new Date(filters.minTimestamp),
+      };
+    }
+
+    if (filters?.maxTimeStamp) {
+      where.timestamp = {
+        ...(where.timestamp || {}),
+        $lte: new Date(filters.maxTimeStamp),
+      };
+    }
+
+    if (filters?.userIds?.length) {
+      where.$or = [
+        { owner: { id: { $in: filters.userIds } } },
+        { participants: { id: { $in: filters.userIds } } },
+      ];
+    }
+    const events = await this.repo.findAll(where);
+
+    let result = events.map((event) => this.toEventResponse(event));
+
+    const sortBy = sorting.sortBy ?? "timestamp";
+    const sortOrder = sorting.sortOrder === "desc" ? -1 : 1;
+
+    result = result.sort((a, b) => {
+      let aValue, bValue;
+
+      if (sortBy === "status") {
+        aValue = a.status.toLowerCase() ?? "";
+        bValue = b.status.toLowerCase() ?? "";
+      }
+
+      if (aValue! < bValue!) return -1 * sortOrder;
+      if (aValue! > bValue!) return 1 * sortOrder;
+      return 0;
     });
+
+    return result;
   }
 
   async updateEvent(eventId: string, updateData: Partial<UpdateEventRequest>) {
-    const event = await this.eventRepository.findById(eventId);
+    const event = await this.repo.findById(eventId);
     if (!event) {
       throw new Error("Event not found");
     }
@@ -68,7 +122,7 @@ export class EventService {
       event.participants.set(participantUsers);
     }
 
-    await this.eventRepository.save(event);
+    await this.repo.save(event);
 
     return this.toEventResponse(event);
   }

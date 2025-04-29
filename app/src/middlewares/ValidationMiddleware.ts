@@ -5,8 +5,13 @@ import { Validator } from "../Utils/Validator.js";
 export const ValidationMiddleware = () => {
   return async (ctx: Context, next: Next) => {
     try {
-      if (ctx.method !== "GET") {
-        console.log(ctx.request.url);
+      Validator.validateQuery(ctx);
+
+      if (
+        ctx.method === "POST" ||
+        ctx.method === "PUT" ||
+        ctx.method === "PATCH"
+      ) {
         Validator.validateBody(ctx);
       }
       await next();

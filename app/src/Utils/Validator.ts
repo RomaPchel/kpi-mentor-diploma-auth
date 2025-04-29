@@ -3,8 +3,9 @@ import type { Context } from "koa";
 import type { MatchFunction } from "path-to-regexp";
 import { ZodSchema } from "zod";
 import {
+  CreateEventSchema, EventParamSchema,
   LoginRequestSchema,
-  RegistrationRequestSchema,
+  RegistrationRequestSchema, UpdateEventSchema
 } from "../schemas/ZodSchemas.js";
 
 type SchemaEntry = {
@@ -23,6 +24,21 @@ const schemaMap: SchemaEntry[] = [
     pattern: "/api/auth/login",
     matcher: match("/api/auth/login", { decode: decodeURIComponent }),
     schema: LoginRequestSchema,
+  },
+  {
+    pattern: "/api/events",
+    matcher: match("/api/events", { decode: decodeURIComponent }),
+    schema: CreateEventSchema,
+  },
+  {
+    pattern: "/api/events/:id",
+    matcher: match("/api/events/:id", { decode: decodeURIComponent }),
+    schema: EventParamSchema,
+  },
+  {
+    pattern: "/api/events/:id",
+    matcher: match("/api/events/:id", { decode: decodeURIComponent }),
+    schema: UpdateEventSchema,
   },
 ];
 

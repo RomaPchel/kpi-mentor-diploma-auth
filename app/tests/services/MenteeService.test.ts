@@ -147,4 +147,58 @@ describe("MenteeService", () => {
       "You have already requested to become a mentee for this mentor.",
     );
   });
+
+  it("should reject a mentee request", async () => {
+    const request = new BecomeMenteeRequest();
+    request.uuid = "request-id";
+    request.status = MentorRequestStatus.PENDING;
+
+    mockMenteeRepo.getOneRequestByMentorAndUser.mockResolvedValue(request);
+
+    await service.rejectRequest("request-id", "user-id");
+
+    expect(mockMenteeRepo.getOneRequestByMentorAndUser).toHaveBeenCalledWith(
+      "request-id",
+      "user-id",
+    );
+    expect(mockMenteeRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: MentorRequestStatus.REJECTED,
+        processedAt: expect.any(Date),
+      }),
+    );
+  });
+
+  it("should get pending requests for a user", async () => {
+    const request1 = new BecomeMenteeRequest();
+    request1.uuid = "r1";
+    request1.status = MentorRequestStatus.PENDING;
+    request1.createdAt = new Date();
+    request1.user = new User();
+    request1.user.uuid = "u1";
+    request1.user.firstName = "Test";
+    request1.user.lastName = "User";
+
+    mockMenteeRepo.getAllRequestsByUserAndStatus.mockResolvedValue([request1]);
+
+    const result = await service.getRequestsByUser("u1");
+
+    expect(mockMenteeRepo.getAllRequestsByUserAndStatus).toHaveBeenCalledWith(
+      "u1",
+      MentorRequestStatus.PENDING,
+      "createdAt",
+      "DESC",
+    );
+    expect(result.requests).toHaveLength(1);
+    expect(result.requests[0]).toMatchObject({
+      id: "r1",
+      status: MentorRequestStatus.PENDING,
+      createdAt: request1.createdAt,
+      user: {
+        uuid: "u1",
+        name: "Test User",
+      },
+    });
+  });
+
 });

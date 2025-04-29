@@ -50,7 +50,7 @@ describe("EventService", () => {
 
   beforeEach(() => {
     service = new EventService();
-    mockEventRepo = (service as any).eventRepository;
+    mockEventRepo = (service as any).repo;
     mockUserRepo = (service as any).userRepository;
     jest.clearAllMocks();
   });
@@ -211,7 +211,8 @@ describe("EventService", () => {
 
     (mockEventRepo.findAll as jest.Mock).mockResolvedValue([event1, event2]);
 
-    const result = await service.getAllEvents();
+    const result = await service.getAllEvents( { status: EventStatus.PLANNED },
+      { sortOrder: "desc" },);
 
     expect(mockEventRepo.findAll).toHaveBeenCalled();
     expect(result).toEqual([

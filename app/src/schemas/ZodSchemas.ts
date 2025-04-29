@@ -27,3 +27,20 @@ export const UUIDParamSchema = z.object({
 export const MentorRequestParamSchema = z.object({
   id: z.string().uuid({ message: "Invalid request ID format" }),
 });
+
+export const CreateEventSchema = z.object({
+  url: z.string().uuid({ message: "Invalid url format" }),
+  timestamp: z.string().uuid({ message: "Invalid timestamp format" }),
+  participants: z.array(z.string().uuid({ message: "Invalid participant format" })),
+});
+
+export const UpdateEventSchema = z.object({
+  url: z.string().uuid({ message: "Invalid url format" }),
+  timestamp: z.string().uuid({ message: "Invalid timestamp format" }),
+  status: z.string().uuid({ message: "Invalid status format" }),
+  participants: z.array(z.string().uuid({ message: "Invalid participant format" })),
+});
+
+export const EventParamSchema = z.object({
+  id: z.string().uuid({ message: "Invalid request ID format" }),
+});

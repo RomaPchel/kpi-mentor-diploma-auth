@@ -24,7 +24,7 @@ export class EventController extends Router {
   }
 
   private setUpRoutes() {
-    this.post("/create", AuthMiddleware(), this.createEvent.bind(this));
+    this.post("/", AuthMiddleware(), this.createEvent.bind(this));
     this.get("/:id", AuthMiddleware(), this.getEvent.bind(this));
     this.get("/", AuthMiddleware(), this.getAllEvents.bind(this));
     this.put("/:id", AuthMiddleware(), this.updateEvent.bind(this));
@@ -104,7 +104,29 @@ export class EventController extends Router {
       if (!user) {
         ctx.throw(401, "Unauthorized");
       }
-      const events = await this.eventService.getAllEvents();
+
+      const {
+        userIds,
+        status,
+        minTimestamp,
+        maxTimeStamp,
+        sortBy,
+        sortOrder,
+      } = ctx.query;
+
+      const filters: Record<string, any> = {};
+
+      if (userIds !== undefined) filters.userIds = userIds;
+      if (status !== undefined) filters.status = status;
+      if (minTimestamp !== undefined) filters.minTimestamp = minTimestamp;
+      if (maxTimeStamp !== undefined) filters.maxTimeStamp = maxTimeStamp;
+
+      const sorting: Record<string, any> = {};
+
+      if (sortBy !== undefined) sorting.sortBy = sortBy;
+      if (sortOrder !== undefined) sorting.sortOrder = sortOrder;
+
+      const events = await this.eventService.getAllEvents(filters, sorting);
       ctx.status = 200;
       ctx.body = events;
     } catch (e: unknown) {

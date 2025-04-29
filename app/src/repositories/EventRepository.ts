@@ -14,7 +14,7 @@ export class EventRepository {
     return await em.findOne(Event, { uuid: eventId }, { populate: ["participants"] });
   }
 
-  async findAll() {
-    return await em.findAll(Event, { populate: ["participants"] });
+  async findAll(where: any) {
+    return await em.find(Event, where, { populate: ["participants"] });
   }
 }
