@@ -105,14 +105,8 @@ export class EventController extends Router {
         ctx.throw(401, "Unauthorized");
       }
 
-      const {
-        userIds,
-        status,
-        minTimestamp,
-        maxTimeStamp,
-        sortBy,
-        sortOrder,
-      } = ctx.query;
+      const { userIds, status, minTimestamp, maxTimeStamp, sortBy, sortOrder } =
+        ctx.query;
 
       const filters: Record<string, any> = {};
 
