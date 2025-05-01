@@ -4,10 +4,10 @@ import type { Context } from "koa";
 import { ZodSchema } from "zod";
 import {
   CreateEventSchema,
-  EventParamSchema,
+  EventIdSchema, GetAllEventsQuerySchema,
   LoginRequestSchema,
   RegistrationRequestSchema,
-  UpdateEventSchema,
+  UpdateEventSchema
 } from "../schemas/ZodSchemas.js";
 
 type SchemaEntry = {
@@ -51,8 +51,22 @@ const schemaMap: SchemaEntry[] = [
     method: "PUT",
     pattern: "/api/events/:id",
     matcher: match("/api/events/:id", { decode: decodeURIComponent }),
-    schema: EventParamSchema,
+    schema: EventIdSchema,
     validate: "path",
+  },
+  {
+    method: "GET",
+    pattern: "/api/events/:id",
+    matcher: match("/api/events/:id", { decode: decodeURIComponent }),
+    schema: EventIdSchema,
+    validate: "path",
+  },
+  {
+    method: "GET",
+    pattern: "/api/events",
+    matcher: match("/api/events", { decode: decodeURIComponent }),
+    schema: GetAllEventsQuerySchema,
+    validate: "query",
   },
 ];
 
@@ -88,6 +102,7 @@ export class Validator {
     if (!hit) {
       return;
     }
+    console.log(ctx.request.query)
     hit.schema.parse(ctx.request.query);
   }
 
@@ -97,14 +112,14 @@ export class Validator {
     if (!hit) {
       return;
     }
-    hit.schema.parse(hit.params); // важно!
+    hit.schema.parse(hit.params);
   }
 
   public static validateRequest(ctx: Context) {
+    this.validatePathParams(ctx);
     // body for non‑GET
     if (ctx.request.method !== "GET") {
       this.validateBody(ctx);
-      this.validatePathParams(ctx);
     }
     // query if any
     if (ctx.request.querystring) {

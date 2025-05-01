@@ -41,7 +41,6 @@ await orm.connect().then(() => {
 SocketSingleton.getInstance(server);
 console.log("Socket instance initialized");
 
-app.use(ValidationMiddleware());
 app
   .use(new AuthController().routes())
   .use(new AuthController().allowedMethods());
@@ -67,3 +66,5 @@ app
 server.listen(3000, () => {
   console.log(`Auth server is running on port 3000`);
 });
+
+export { app, server };

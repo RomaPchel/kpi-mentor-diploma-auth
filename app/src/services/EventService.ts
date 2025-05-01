@@ -27,6 +27,9 @@ export class EventService {
     event.status = EventStatus.PLANNED;
 
     const users = await this.userRepository.getAllUsersByIds(participants);
+    if (users.length == 0) {
+      throw new Error("USERS_NOT_FOUND")
+    }
     event.participants.set(users);
     event.timestamp = new Date(Number(timestamp));
 
@@ -77,10 +80,11 @@ export class EventService {
 
     if (filters?.userIds?.length) {
       where.$or = [
-        { owner: { id: { $in: filters.userIds } } },
-        { participants: { id: { $in: filters.userIds } } },
+        { owner: { uuid: { $in: filters.userIds } } },
+        { participants: { uuid: { $in: filters.userIds } } },
       ];
     }
+
     const events = await this.repo.findAll(where);
 
     let result = events.map((event) => this.toEventResponse(event));

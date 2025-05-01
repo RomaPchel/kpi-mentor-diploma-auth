@@ -72,7 +72,12 @@ export const CreateEventSchema = z.object({
 });
 
 export const UpdateEventSchema = z.object({
-  url: z.string().optional(),
+  url: z
+    .string()
+    .optional()
+    .refine((value) => value !== undefined && value !== null && value !== "", {
+      message: "URL_CAN_NOT_BE_EMPTY",
+    }),
   timestamp: z
     .string()
     .refine((value) => /^\d{13}$/.test(value), {
@@ -94,6 +99,40 @@ export const UpdateEventSchema = z.object({
     .optional(),
 });
 
-export const EventParamSchema = z.object({
+export const EventIdSchema = z.object({
   id: z.string().uuid({ message: "ID_MUST_BE_VALID" }),
+});
+
+export const GetAllEventsQuerySchema = z.object({
+  status: z
+    .nativeEnum(EventStatus, {
+      errorMap: () => {
+        return { message: "STATUS_MUST_BE_VALID" };
+      },
+    })
+    .optional(),
+  minTimestamp: z
+    .string()
+    .refine((value) => /^\d{13}$/.test(value), {
+      message: "TIMESTAMP_MUST_BE_A_VALID",
+    })
+    .optional(),
+  maxTimeStamp: z
+    .string()
+    .refine((value) => /^\d{13}$/.test(value), {
+      message: "TIMESTAMP_MUST_BE_A_VALID",
+    })
+    .optional(),
+  sortBy: z
+    .string()
+    .refine((value) => value && value !== "status", {
+      message: "SORT_BY_MUST_BE_VALID",
+    })
+    .optional(),
+  sortOrder: z
+    .string()
+    .refine((value) => value && value !== "asc" && value !== "desc", {
+      message: "SORT_ORDER_MUST_BE_VALID",
+    })
+    .optional(),
 });

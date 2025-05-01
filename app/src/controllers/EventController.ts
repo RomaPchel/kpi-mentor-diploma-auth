@@ -103,10 +103,14 @@ export class EventController extends Router {
 
       const filters: Record<string, any> = {};
 
-      if (userIds !== undefined) filters.userIds = userIds;
+      if (userIds !== undefined)
+        filters.userIds = Array.isArray(userIds) ? userIds : [userIds];
+
       if (status !== undefined) filters.status = status;
       if (minTimestamp !== undefined) filters.minTimestamp = minTimestamp;
       if (maxTimeStamp !== undefined) filters.maxTimeStamp = maxTimeStamp;
+      console.log(filters.userIds);
+      console.log(filters.status);
 
       const sorting: Record<string, any> = {};
 

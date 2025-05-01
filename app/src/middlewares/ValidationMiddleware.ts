@@ -8,7 +8,6 @@ export const ValidationMiddleware = () => {
       Validator.validateRequest(ctx)
       await next();
     } catch (e) {
-      console.log(e);
       if (e instanceof ZodError) {
         ctx.status = 400;
         ctx.body = {
