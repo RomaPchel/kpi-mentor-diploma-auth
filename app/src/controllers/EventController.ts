@@ -39,13 +39,6 @@ export class EventController extends Router {
 
       const createEventRequest = ctx.request.body as CreateEventRequest;
 
-      const errors = await validate(createEventRequest);
-      if (errors.length > 0) {
-        ctx.status = 400;
-        ctx.body = { message: "Validation failed", errors };
-        return;
-      }
-
       const eventResponse = await this.eventService.createEvent(
         createEventRequest,
         user,

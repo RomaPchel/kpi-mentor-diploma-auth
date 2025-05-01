@@ -28,8 +28,7 @@ export class EventService {
 
     const users = await this.userRepository.getAllUsersByIds(participants);
     event.participants.set(users);
-
-    event.timestamp = new Date(timestamp);
+    event.timestamp = new Date(Number(timestamp));
 
     await this.repo.save(event);
 
@@ -113,7 +112,7 @@ export class EventService {
 
     if (updateData.url) event.url = updateData.url;
     if (updateData.status) event.status = updateData.status;
-    if (updateData.timestamp) event.timestamp = new Date(updateData.timestamp);
+    if (updateData.timestamp) event.timestamp = new Date(Number(updateData.timestamp));
 
     if (updateData.participants) {
       const participantUsers = await this.userRepository.getAllUsersByIds(

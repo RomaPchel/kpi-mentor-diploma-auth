@@ -5,15 +5,7 @@ import { Validator } from "../Utils/Validator.js";
 export const ValidationMiddleware = () => {
   return async (ctx: Context, next: Next) => {
     try {
-      Validator.validateQuery(ctx);
-
-      if (
-        ctx.method === "POST" ||
-        ctx.method === "PUT" ||
-        ctx.method === "PATCH"
-      ) {
-        Validator.validateBody(ctx);
-      }
+      Validator.validateRequest(ctx)
       await next();
     } catch (e) {
       console.log(e);

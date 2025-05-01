@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EventStatus } from "../enums/EventEnums.js";
 
 export const RegistrationRequestSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -29,27 +30,69 @@ export const MentorRequestParamSchema = z.object({
 });
 
 export const CreateEventSchema = z.object({
-  url: z.string().nonempty({ message: "URL is required" }),
+  url: z
+    .string()
+    .optional()
+    .refine((value) => value !== undefined && value !== null && value !== "", {
+      message: "URL_CAN_NOT_BE_EMPTY",
+    }),
   timestamp: z
     .string()
-    .nonempty({ message: "Timestamp is required" })
-    .refine((value) => !isNaN(Date.parse(value)), {
-      message: "Invalid timestamp format",
+    .optional()
+    .refine((value) => value !== undefined && value !== null && value !== "", {
+      message: "TIMESTAMP_CAN_NOT_BE_EMPTY",
+    })
+    .refine((value) => value !== undefined && /^\d{13}$/.test(value), {
+      message: "TIMESTAMP_MUST_BE_A_VALID",
+    })
+    .refine((value) => !isNaN(Number(value)), {
+      message: "TIMESTAMP_MUST_BE_A_VALID",
     }),
   participants: z
-    .array(z.string().uuid({ message: "Invalid participant format" }))
-    .min(1, { message: "At least one participant is required" }),
+    .array(
+      z
+        .string()
+        .uuid({ message: "PARTICIPANT_MUST_BE_VALID" })
+        .optional()
+        .refine(
+          (value) => value !== undefined && value !== null && value !== "",
+          {
+            message: "PARTICIPANT_CAN_NOT_BE_EMPTY",
+          },
+        ),
+    )
+    .min(1, { message: "PARTICIPANTS_CAN_NOT_BE_EMPTY" })
+    .refine(
+      (value) => value !== undefined && value !== null && value.length > 0,
+      {
+        message: "PARTICIPANTS_CAN_NOT_BE_EMPTY",
+      },
+    ),
 });
 
 export const UpdateEventSchema = z.object({
-  url: z.string().uuid({ message: "Invalid url format" }),
-  timestamp: z.string().uuid({ message: "Invalid timestamp format" }),
-  status: z.string().uuid({ message: "Invalid status format" }),
-  participants: z.array(
-    z.string().uuid({ message: "Invalid participant format" }),
-  ),
+  url: z.string().optional(),
+  timestamp: z
+    .string()
+    .refine((value) => /^\d{13}$/.test(value), {
+      message: "TIMESTAMP_MUST_BE_A_VALID",
+    })
+    .refine((value) => !isNaN(Number(value)), {
+      message: "TIMESTAMP_MUST_BE_A_VALID",
+    })
+    .optional(),
+  status: z
+    .nativeEnum(EventStatus, {
+      errorMap: () => {
+        return { message: "STATUS_MUST_BE_VALID" };
+      },
+    })
+    .optional(),
+  participants: z
+    .array(z.string().uuid({ message: "PARTICIPANT_MUST_BE_VALID" }))
+    .optional(),
 });
 
 export const EventParamSchema = z.object({
-  id: z.string().uuid({ message: "Invalid request ID format" }),
+  id: z.string().uuid({ message: "ID_MUST_BE_VALID" }),
 });

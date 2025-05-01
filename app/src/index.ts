@@ -31,9 +31,9 @@ app.use(
   }),
 );
 
+app.use(koabodyparser());
 app.use(ErrorMiddleware());
 app.use(ValidationMiddleware());
-app.use(koabodyparser());
 
 await orm.connect().then(() => {
   console.log("Database has connected!");
