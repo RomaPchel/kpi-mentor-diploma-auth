@@ -13,7 +13,7 @@ export interface UpdateMentorRequest {
   status: MentorRequestStatus;
 }
 
-export interface UserProfileUpdateRequest {
+export interface UserUpdateRequest {
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -27,7 +27,7 @@ export interface UserProfileUpdateRequest {
   interests?: string[];
 }
 
-export interface UserProfileResponse {
+export interface UserResponse {
   id: string;
   firstName: string;
   lastName: string;

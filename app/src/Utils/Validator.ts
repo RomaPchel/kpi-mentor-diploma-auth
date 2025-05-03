@@ -4,10 +4,12 @@ import type { Context } from "koa";
 import { ZodSchema } from "zod";
 import {
   CreateEventSchema,
-  EventIdSchema, GetAllEventsQuerySchema,
+  EventIdSchema,
+  GetAllEventsQuerySchema,
   LoginRequestSchema,
   RegistrationRequestSchema,
-  UpdateEventSchema
+  UpdateEventSchema,
+  UpdateUserSchema,
 } from "../schemas/ZodSchemas.js";
 
 type SchemaEntry = {
@@ -68,6 +70,13 @@ const schemaMap: SchemaEntry[] = [
     schema: GetAllEventsQuerySchema,
     validate: "query",
   },
+  {
+    method: "PUT",
+    pattern: "/api/users",
+    matcher: match("/api/users", { decode: decodeURIComponent }),
+    schema: UpdateUserSchema,
+    validate: "body",
+  },
 ];
 
 export class Validator {
@@ -102,7 +111,7 @@ export class Validator {
     if (!hit) {
       return;
     }
-    console.log(ctx.request.query)
+    console.log(ctx.request.query);
     hit.schema.parse(ctx.request.query);
   }
 

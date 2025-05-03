@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { EventStatus } from "../enums/EventEnums.js";
+import { FormsOfEducation } from "../enums/UserEnums";
 
 export const RegistrationRequestSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -114,25 +115,47 @@ export const GetAllEventsQuerySchema = z.object({
   minTimestamp: z
     .string()
     .refine((value) => /^\d{13}$/.test(value), {
-      message: "TIMESTAMP_MUST_BE_A_VALID",
+      message: "MIN_TIMESTAMP_MUST_BE_VALID",
     })
     .optional(),
-  maxTimeStamp: z
+  maxTimestamp: z
     .string()
     .refine((value) => /^\d{13}$/.test(value), {
-      message: "TIMESTAMP_MUST_BE_A_VALID",
+      message: "MAX_TIMESTAMP_MUST_BE_VALID",
     })
     .optional(),
   sortBy: z
     .string()
-    .refine((value) => value && value !== "status", {
+    .refine((value) => value && value === "status", {
       message: "SORT_BY_MUST_BE_VALID",
     })
     .optional(),
   sortOrder: z
     .string()
-    .refine((value) => value && value !== "asc" && value !== "desc", {
+    .refine((value) => (value && value === "asc") || value === "desc", {
       message: "SORT_ORDER_MUST_BE_VALID",
     })
     .optional(),
+});
+
+export const UpdateUserSchema = z.object({
+  firstName: z.string().min(1, "FIRST_NAME_CANNOT_BE_EMPTY").optional(),
+  lastName: z.string().min(1, "LAST_NAME_CANNOT_BE_EMPTY").optional(),
+  email: z.string().email().optional(),
+  avatar: z.string().url().min(1, "AVATAR_CANNOT_BE_EMPTY").optional(),
+  bio: z.string().min(1, "BIO_CANNOT_BE_EMPTY").optional(),
+  specializationCode: z.number().optional(),
+  specializationTitle: z
+    .string()
+    .min(1, "SPECIALIZATION_TITLE_CANNOT_BE_EMPTY")
+    .optional(),
+  formOfEducation: z.nativeEnum(FormsOfEducation).optional(),
+  groupCode: z.string().min(1, "GROUP_CODE_CANNOT_BE_EMPTY").optional(),
+  department: z.string().min(1, "DEPARTMENT_CANNOT_BE_EMPTY").optional(),
+  interests: z
+    .array(z.string().min(1, "INTEREST_CANNOT_BE_EMPTY"))
+    .optional()
+    .refine((arr) => arr === undefined || arr.length > 0, {
+      message: "INTERESTS_CANNOT_BE_EMPTY",
+    }),
 });

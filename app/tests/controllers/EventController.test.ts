@@ -444,4 +444,67 @@ describe("EventController - Get all events", () => {
     expect(mockEvent).toHaveBeenCalledTimes(1);
   });
 
+  it("should fail if minTimestamp is not valid ", async () => {
+    mockEvent.mockResolvedValueOnce([mockResponse]);
+
+    const response = await request(app.callback())
+      .get(`/api/events?minTimestamp=4343`)
+      .expect(400);
+
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "minTimestamp",
+          message: "MIN_TIMESTAMP_MUST_BE_VALID",
+        }),
+      ]),
+    );
+  });
+
+  it("should fail if maxTimestamp is not valid ", async () => {
+    mockEvent.mockResolvedValueOnce([mockResponse]);
+
+    const response = await request(app.callback())
+      .get(`/api/events?maxTimestamp=4343`)
+      .expect(400);
+
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "maxTimestamp",
+          message: "MAX_TIMESTAMP_MUST_BE_VALID",
+        }),
+      ]),
+    );
+  });
+
+  it("should fail if sortBy is not valid", async () => {
+    const response = await request(app.callback())
+      .get(`/api/events?sortBy=statu`)
+      .expect(400);
+
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "sortBy",
+          message: "SORT_BY_MUST_BE_VALID",
+        }),
+      ]),
+    );
+  });
+
+  it("should fail if sortOrder is not valid", async () => {
+    const response = await request(app.callback())
+      .get(`/api/events?sortOrder=asce`)
+      .expect(400);
+
+    expect(response.body.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "sortOrder",
+          message: "SORT_ORDER_MUST_BE_VALID",
+        }),
+      ]),
+    );
+  });
 });

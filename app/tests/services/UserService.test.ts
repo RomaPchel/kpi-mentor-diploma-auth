@@ -1,7 +1,7 @@
 import { UserService } from "../../src/services/UserService";
 import { UserRepository } from "../../src/repositories/UserRepository";
 import { User } from "../../src/entities/User";
-import type { UserProfileUpdateRequest } from "../../src/interfaces/UserInterface";
+import type { UserUpdateRequest } from "../../src/interfaces/UserInterface";
 import { FormsOfEducation } from "../../src/enums/UserEnums";
 
 jest.mock("../../src/repositories/UserRepository", () => {
@@ -27,7 +27,7 @@ describe("UserService", () => {
     user.firstName = "OldFirst";
     user.lastName = "OldLast";
 
-    const updateData: UserProfileUpdateRequest = {
+    const updateData: UserUpdateRequest = {
       firstName: "NewFirst",
       lastName: "NewLast",
       email: "new@example.com",
@@ -69,7 +69,7 @@ describe("UserService", () => {
     user.firstName = "OldFirst";
     user.lastName = "OldLast";
 
-    const updateData: UserProfileUpdateRequest = {};
+    const updateData: UserUpdateRequest = {};
 
     const result = await service.updateUser(user, updateData);
 
