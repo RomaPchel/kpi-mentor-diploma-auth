@@ -22,50 +22,50 @@ export class MentorController extends Router {
 
   private setUpRoutes() {
     this.post(
-      "/become-mentor-request",
+      "/requests",
       AuthMiddleware(),
-      this.createBecomeMentorRequest.bind(this),
+      this.createRequest.bind(this),
     );
 
     this.get(
-      "/become-mentor-request",
+      "/requests",
       AuthMiddleware(),
-      this.getOwnBecomeMentorRequest.bind(this),
+      this.getRequest.bind(this),
     );
 
     this.get(
-      "/become-mentor-request/all",
+      "/requests/all",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
-      this.getAllBecomeMentorRequests.bind(this),
+      this.getAllRequests.bind(this),
     );
 
     this.get(
-      "/become-mentor-request/:id",
+      "/requests/:id",
       AuthMiddleware(),
-      this.getBecomeMentorRequestById.bind(this),
+      this.getRequestById.bind(this),
     );
 
     this.put(
-      "/become-mentor-request/:id",
+      "/requests/:id",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
-      this.updateBecomeMentorRequest.bind(this),
+      this.updateRequest.bind(this),
     );
 
     this.delete(
-      "/become-mentor-request/:id",
+      "/requests/:id",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
-      this.deleteBecomeMentorRequest.bind(this),
+      this.deleteRequest.bind(this),
     );
 
     this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
-    this.get("/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
-    this.put("/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
+    this.get("/:id", AuthMiddleware(), this.getOneMentor.bind(this));
+    this.put("/rate/:id", AuthMiddleware(), this.rateMentor.bind(this));
   }
 
-  private async createBecomeMentorRequest(ctx: Context): Promise<void> {
+  private async createRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
     const motivation = ctx.request.body as CreateMentorRequest;
@@ -83,14 +83,14 @@ export class MentorController extends Router {
     ctx.status = 200;
   }
 
-  private async getOwnBecomeMentorRequest(ctx: Context): Promise<void> {
+  private async getRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
     ctx.body = await this.mentorService.getOneRequestByUser(user);
     ctx.status = 200;
   }
 
-  private async getAllBecomeMentorRequests(ctx: Context): Promise<void> {
+  private async getAllRequests(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
     if (!user) {
       ctx.throw(401, "Unauthorized");
@@ -100,7 +100,7 @@ export class MentorController extends Router {
     ctx.status = 200;
   }
 
-  private async getBecomeMentorRequestById(ctx: Context): Promise<void> {
+  private async getRequestById(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
     const id = ctx.params.id;
@@ -109,7 +109,7 @@ export class MentorController extends Router {
     ctx.status = 200;
   }
 
-  private async updateBecomeMentorRequest(ctx: Context): Promise<void> {
+  private async updateRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
     if (!user) {
       ctx.throw(401, "Unauthorized");
@@ -123,7 +123,7 @@ export class MentorController extends Router {
     ctx.status = 200;
   }
 
-  private async deleteBecomeMentorRequest(ctx: Context): Promise<void> {
+  private async deleteRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
     if (!user) {
       ctx.throw(401, "Unauthorized");
@@ -173,7 +173,7 @@ export class MentorController extends Router {
     if (!user) {
       ctx.throw(401, "Unauthorized");
     }
-    const uuid = ctx.params.uuid;
+    const uuid = ctx.params.id;
     ctx.body = await this.mentorService.getOneMentor(uuid);
     ctx.status = 200;
   }

@@ -3,13 +3,15 @@ import { match } from "path-to-regexp";
 import type { Context } from "koa";
 import { ZodSchema } from "zod";
 import {
+  BecomeMentorRequestIdSchema,
+  CreateBecomeMentorRequestSchema,
   CreateEventSchema,
   EventIdSchema,
-  GetAllEventsQuerySchema,
-  LoginRequestSchema,
-  RegistrationRequestSchema,
+  GetAllEventsQuerySchema, GetAllMentorsQuerySchema,
+  LoginRequestSchema, MentorIdSchema, RateMentorSchema,
+  RegistrationRequestSchema, UpdateBecomeMentorRequestSchema,
   UpdateEventSchema,
-  UpdateUserSchema,
+  UpdateUserSchema
 } from "../schemas/ZodSchemas.js";
 
 type SchemaEntry = {
@@ -75,6 +77,62 @@ const schemaMap: SchemaEntry[] = [
     pattern: "/api/users",
     matcher: match("/api/users", { decode: decodeURIComponent }),
     schema: UpdateUserSchema,
+    validate: "body",
+  },
+  {
+    method: "POST",
+    pattern: "/api/mentors/requests",
+    matcher: match("api/mentors/requests", { decode: decodeURIComponent }),
+    schema: CreateBecomeMentorRequestSchema,
+    validate: "body",
+  },
+  {
+    method: "GET",
+    pattern: "/api/mentors/requests/:id",
+    matcher: match("api/mentors/requests/:id", { decode: decodeURIComponent }),
+    schema: BecomeMentorRequestIdSchema,
+    validate: "path",
+  },
+  {
+    method: "PUT",
+    pattern: "/api/mentors/requests/:id",
+    matcher: match("api/mentors/requests/:id", { decode: decodeURIComponent }),
+    schema: BecomeMentorRequestIdSchema,
+    validate: "path",
+  },
+  {
+    method: "PUT",
+    pattern: "/api/mentors/requests/:id",
+    matcher: match("api/mentors/requests/:id", { decode: decodeURIComponent }),
+    schema: UpdateBecomeMentorRequestSchema,
+    validate: "body",
+  },
+  {
+    method: "DELETE",
+    pattern: "/api/mentors/requests/:id",
+    matcher: match("api/mentors/requests/:id", { decode: decodeURIComponent }),
+    schema: BecomeMentorRequestIdSchema,
+    validate: "path",
+  },
+  {
+    method: "GET",
+    pattern: "/api/mentors",
+    matcher: match("api/mentors", { decode: decodeURIComponent }),
+    schema: GetAllMentorsQuerySchema,
+    validate: "query",
+  },
+  {
+    method: "GET",
+    pattern: "/api/mentors/:id",
+    matcher: match("api/mentors/:id", { decode: decodeURIComponent }),
+    schema: MentorIdSchema,
+    validate: "path",
+  },
+  {
+    method: "PUT",
+    pattern: "/api/mentors/rate/:id",
+    matcher: match("api/mentors/rate/:id", { decode: decodeURIComponent }),
+    schema: RateMentorSchema,
     validate: "body",
   },
 ];

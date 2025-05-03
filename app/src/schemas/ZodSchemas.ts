@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { EventStatus } from "../enums/EventEnums.js";
-import { FormsOfEducation } from "../enums/UserEnums";
+import { FormsOfEducation, MentorRequestStatus } from "../enums/UserEnums";
 
 export const RegistrationRequestSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -158,4 +158,70 @@ export const UpdateUserSchema = z.object({
     .refine((arr) => arr === undefined || arr.length > 0, {
       message: "INTERESTS_CANNOT_BE_EMPTY",
     }),
+});
+
+export const CreateBecomeMentorRequestSchema = z.object({
+  motivation: z.string().min(1, "MOTIVATION_CANNOT_BE_EMPTY").optional(),
+});
+
+export const BecomeMentorRequestIdSchema = z.object({
+  id: z.string().uuid({ message: "ID_MUST_BE_VALID" }),
+});
+
+export const UpdateBecomeMentorRequestSchema = z.object({
+  motivation: z.string().min(1, "MOTIVATION_CANNOT_BE_EMPTY").optional(),
+  status: z.nativeEnum(MentorRequestStatus).optional(),
+});
+
+export const RateMentorSchema = z.object({
+  rating: z
+    .number()
+    .optional()
+    .refine(val => !isNaN(Number(val)), {
+      message: "RATING_MUST_BE_VALID",
+    }),
+});
+
+export const GetAllMentorsQuerySchema = z.object({
+  name: z.string().optional(),
+  minRating: z
+    .string()
+    .refine((val) => !isNaN(Number(val)), {
+      message: "MIN_RATING_MUST_VALID",
+    })
+    .optional(),
+  maxRating: z
+    .string()
+    .refine((val) => !isNaN(Number(val)), {
+      message: "MAX_RATING_MUST_VALID",
+    })
+    .optional(),
+  minReviews: z
+    .string()
+    .refine((val) => /^\d+$/.test(val), {
+      message: "MIN_REVIEWS_MUST_VALID",
+    })
+    .optional(),
+  maxReviews: z
+    .string()
+    .refine((val) => /^\d+$/.test(val), {
+      message: "MAX_REVIEWS_MUST_VALID",
+    })
+    .optional(),
+  sortBy: z
+    .string()
+    .refine((val) => ["name", "rating", "reviews"].includes(val), {
+      message: "SORT_BY_MUST_BE_VALID",
+    })
+    .optional(),
+  sortOrder: z
+    .string()
+    .refine((val) => val === "asc" || val === "desc", {
+      message: "SORT_ORDER_MUST_BE_VALID",
+    })
+    .optional(),
+});
+
+export const MentorIdSchema = z.object({
+  id: z.string().uuid({ message: "ID_MUST_BE_VALID" }),
 });
