@@ -60,9 +60,9 @@ export class MentorController extends Router {
       this.deleteBecomeMentorRequest.bind(this),
     );
 
-    this.get("/mentors", AuthMiddleware(), this.getAllMentors.bind(this));
-    this.get("/mentors/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
-    this.put("/mentors/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
+    this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
+    this.get("/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
+    this.put("/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
   }
 
   private async createBecomeMentorRequest(ctx: Context): Promise<void> {
@@ -169,11 +169,8 @@ export class MentorController extends Router {
   }
 
   private async getOneMentor(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
     const uuid = ctx.params.uuid;
+
     ctx.body = await this.mentorService.getOneMentor(uuid);
     ctx.status = 200;
   }

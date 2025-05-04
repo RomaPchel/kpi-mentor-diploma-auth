@@ -176,7 +176,6 @@ export class MentorService {
       { populate: ["mentor"] },
     );
 
-    console.log(mentor);
     return this.toMentorProfileResponse(mentor as MentorProfile);
   }
 

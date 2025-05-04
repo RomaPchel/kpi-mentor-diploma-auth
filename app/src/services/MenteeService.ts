@@ -70,11 +70,26 @@ export class MenteeService {
     };
   }
 
+  async getMentorMenteeRequest(mentorUuid: string, userUuid: string) {
+    return await em.findOne(
+      BecomeMenteeRequest,
+      {
+        mentor: mentorUuid,
+        user: userUuid,
+        status: MentorRequestStatus.PENDING,
+      },
+      {
+        orderBy: { createdAt: "DESC" },
+      },
+    );
+  }
+
   async becomeMentee(
     requestingUser: User,
     mentorUuid: string,
     motivation: string,
   ) {
+    console.log(mentorUuid);
     const mentor = await em.findOneOrFail(User, { uuid: mentorUuid });
 
     const existing = await em.findOne(BecomeMenteeRequest, {

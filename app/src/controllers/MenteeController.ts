@@ -23,6 +23,11 @@ export class MenteeController extends Router {
       this.getMentorMenteeRequests.bind(this),
     );
     this.get(
+      "/mentee-request/:uuid",
+      AuthMiddleware(),
+      this.getMentorMenteeRequest.bind(this),
+    );
+    this.get(
       "/mentees",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
@@ -49,9 +54,6 @@ export class MenteeController extends Router {
 
   private async getYourMentees(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
 
     ctx.body = await this.menteeService.getYourMentees(user.uuid);
     ctx.status = 200;
@@ -59,19 +61,28 @@ export class MenteeController extends Router {
 
   private async getMentorMenteeRequests(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
 
     ctx.body = await this.menteeService.getMentorMenteeRequests(user.uuid);
     ctx.status = 200;
   }
 
+  private async getMentorMenteeRequest(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    const request = await this.menteeService.getMentorMenteeRequest(
+      ctx.params.uuid as string,
+      user.uuid,
+    );
+
+    if (!request) {
+      ctx.throw(400, "No request");
+    }
+
+    ctx.body = request;
+    ctx.status = 200;
+  }
+
   private async approveMenteeRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
 
     ctx.body = await this.menteeService.approveMenteeRequest(
       ctx.params.uuid as string,
@@ -82,9 +93,6 @@ export class MenteeController extends Router {
 
   private async rejectMenteeRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
 
     ctx.body = await this.menteeService.rejectMenteeRequest(
       ctx.params.uuid as string,
@@ -96,9 +104,7 @@ export class MenteeController extends Router {
   private async becomeMentee(ctx: Context): Promise<void> {
     try {
       const user: User = ctx.state.user;
-      if (!user) {
-        ctx.throw(401, "Unauthorized");
-      }
+
       console.log(user);
       const { mentorUuid, motivation } = (await ctx.request.body) as {
         mentorUuid: string;

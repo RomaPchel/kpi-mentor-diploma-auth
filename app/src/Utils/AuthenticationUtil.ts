@@ -28,8 +28,6 @@ export class AuthenticationUtil {
 
     const newUser: User = new User();
 
-    console.log(body);
-
     newUser.firstName = body.firstName;
     newUser.lastName = body.lastName;
     newUser.email = body.email;
