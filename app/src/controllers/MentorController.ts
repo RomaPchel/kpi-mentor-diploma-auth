@@ -26,43 +26,37 @@ export class MentorController extends Router {
       AuthMiddleware(),
       this.createBecomeMentorRequest.bind(this),
     );
-
     this.get(
       "/become-mentor-request",
       AuthMiddleware(),
       this.getOwnBecomeMentorRequest.bind(this),
     );
-
     this.get(
       "/become-mentor-request/all",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
       this.getAllBecomeMentorRequests.bind(this),
     );
-
     this.get(
       "/become-mentor-request/:id",
       AuthMiddleware(),
       this.getBecomeMentorRequestById.bind(this),
     );
-
     this.put(
       "/become-mentor-request/:id",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
       this.updateBecomeMentorRequest.bind(this),
     );
-
     this.delete(
       "/become-mentor-request/:id",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
       this.deleteBecomeMentorRequest.bind(this),
     );
-
+    this.get("/profile/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
     this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
-    this.get("/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
-    this.put("/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
+    this.put("/rate/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
   }
 
   private async createBecomeMentorRequest(ctx: Context): Promise<void> {
@@ -136,36 +130,35 @@ export class MentorController extends Router {
   }
 
   private async getAllMentors(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
+    try {
+      const {
+        name,
+        minRating,
+        maxRating,
+        minReviews,
+        maxReviews,
+        sortBy,
+        sortOrder,
+      } = ctx.query;
+
+      const filters: Record<string, any> = {};
+
+      if (name !== undefined) filters.name = name;
+      if (minRating !== undefined) filters.minRating = Number(minRating);
+      if (maxRating !== undefined) filters.maxRating = Number(maxRating);
+      if (minReviews !== undefined) filters.minReviews = Number(minReviews);
+      if (maxReviews !== undefined) filters.maxReviews = Number(maxReviews);
+
+      const sorting: Record<string, any> = {};
+
+      if (sortBy !== undefined) sorting.sortBy = sortBy;
+      if (sortOrder !== undefined) sorting.sortOrder = sortOrder;
+
+      ctx.body = await this.mentorService.getAllMentors(filters, sorting);
+      ctx.status = 200;
+    } catch (e) {
+      console.error(e);
     }
-
-    const {
-      name,
-      minRating,
-      maxRating,
-      minReviews,
-      maxReviews,
-      sortBy,
-      sortOrder,
-    } = ctx.query;
-
-    const filters: Record<string, any> = {};
-
-    if (name !== undefined) filters.name = name;
-    if (minRating !== undefined) filters.minRating = Number(minRating);
-    if (maxRating !== undefined) filters.maxRating = Number(maxRating);
-    if (minReviews !== undefined) filters.minReviews = Number(minReviews);
-    if (maxReviews !== undefined) filters.maxReviews = Number(maxReviews);
-
-    const sorting: Record<string, any> = {};
-
-    if (sortBy !== undefined) sorting.sortBy = sortBy;
-    if (sortOrder !== undefined) sorting.sortOrder = sortOrder;
-
-    ctx.body = await this.mentorService.getAllMentors(filters, sorting);
-    ctx.status = 200;
   }
 
   private async getOneMentor(ctx: Context): Promise<void> {
@@ -177,13 +170,12 @@ export class MentorController extends Router {
 
   private async rateMentor(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
+
     const uuid = ctx.params.uuid;
+    console.log(uuid);
     const rateRequest = ctx.request.body as RateMentorRequest;
 
-    await this.mentorService.rateMentor(uuid, rateRequest);
+    await this.mentorService.rateMentor(uuid, user, rateRequest);
     ctx.status = 200;
   }
 }

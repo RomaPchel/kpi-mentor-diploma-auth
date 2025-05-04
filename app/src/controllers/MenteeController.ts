@@ -50,6 +50,15 @@ export class MenteeController extends Router {
       AuthMiddleware(),
       this.becomeMentee.bind(this),
     );
+    this.get("/my-mentors", AuthMiddleware(), this.getMyMentors.bind(this));
+  }
+
+  private async getMyMentors(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+
+    const mentors = await this.menteeService.getMentorsForStudent(user);
+    ctx.body = mentors;
+    ctx.status = 200;
   }
 
   private async getYourMentees(ctx: Context): Promise<void> {
@@ -84,6 +93,7 @@ export class MenteeController extends Router {
   private async approveMenteeRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
 
+    console.log(user);
     ctx.body = await this.menteeService.approveMenteeRequest(
       ctx.params.uuid as string,
       user,

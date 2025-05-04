@@ -10,11 +10,8 @@ import type {
   UpdateMentorRequest,
 } from "../interfaces/UserInterface.js";
 import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
+import { Review } from "../entities/MentorReview.js";
 
-/**
- * A service class that manages mentor-related operations, including creating,
- * updating, and retrieving mentor requests and profiles, as well as rating mentors.
- */
 export class MentorService {
   async createBecomeMentorRequest(user: User, req: CreateMentorRequest) {
     const existingRequest = await em.findOne(BecomeMentorRequest, {
@@ -134,7 +131,7 @@ export class MentorService {
     }
 
     const mentors = await em.find(MentorProfile, where, {
-      populate: ["mentor"],
+      populate: ["mentor", "reviews.reviewer"],
     });
 
     let result = mentors.map((mentorProfile) =>
@@ -172,10 +169,11 @@ export class MentorService {
   async getOneMentor(uuid: string) {
     const mentor = await em.findOne(
       MentorProfile,
-      { uuid: uuid },
-      { populate: ["mentor"] },
+      { mentor: uuid },
+      { populate: ["mentor", "reviews"] },
     );
 
+    console.log(mentor?.reviews);
     return this.toMentorProfileResponse(mentor as MentorProfile);
   }
 
@@ -221,27 +219,80 @@ export class MentorService {
       bio: profile.mentor.bio,
       rating: profile.rating,
       totalReviews: profile.totalReviews,
+      reviews: profile.reviews.getItems().map((review) => ({
+        friendliness: review.friendliness,
+        knowledge: review.knowledge,
+        communication: review.communication,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        reviewer: {
+          firstName: review.reviewer.firstName,
+          lastName: review.reviewer.lastName,
+          uuid: review.reviewer.uuid,
+        },
+      })),
     };
   }
 
-  async rateMentor(uuid: string, rateRequest: RateMentorRequest) {
-    const mentor = await em.findOne(
-      MentorProfile,
-      { uuid: uuid },
-      { populate: ["mentor"] },
-    );
-    if (mentor === null) {
-      throw new Error("Mentor not found");
-    }
-    if (mentor.rating < 0) {
-      mentor.rating = rateRequest.rating;
-      mentor.totalReviews++;
+  async rateMentor(
+    uuid: string,
+    reviewer: User,
+    rateRequest: RateMentorRequest,
+  ) {
+    try {
+      const mentor = await em.findOne(
+        MentorProfile,
+        { mentor: uuid },
+        { populate: ["mentor"] },
+      );
+
+      if (!mentor) {
+        throw new Error("Mentor not found");
+      }
+
+      // Check for existing review
+      let review = await em.findOne(Review, {
+        mentor,
+        reviewer,
+      });
+
+      if (review) {
+        review.friendliness = rateRequest.friendliness;
+        review.knowledge = rateRequest.knowledge;
+        review.communication = rateRequest.communication;
+        review.comment = rateRequest.comment ?? null;
+      } else {
+        review = em.create(Review, {
+          mentor,
+          reviewer,
+          friendliness: rateRequest.friendliness,
+          knowledge: rateRequest.knowledge,
+          communication: rateRequest.communication,
+          comment: rateRequest.comment ?? null,
+        });
+      }
+
+      await em.persistAndFlush(review);
+
+      // Recalculate rating
+      const reviews = await em.find(Review, { mentor });
+      const total = reviews.length;
+
+      const avg = (key: keyof Review) =>
+        reviews.reduce((sum, r) => sum + (r[key] as number), 0) / total;
+
+      mentor.rating =
+        Math.round(
+          ((avg("friendliness") + avg("knowledge") + avg("communication")) /
+            3) *
+            10,
+        ) / 10;
+      mentor.totalReviews = total;
+
       await em.persistAndFlush(mentor);
-    } else {
-      const sum = mentor.rating * mentor.totalReviews + rateRequest.rating;
-      mentor.rating = sum / (mentor.totalReviews + 1);
-      mentor.totalReviews++;
-      await em.persistAndFlush(mentor);
+    } catch (e) {
+      console.error(e);
+      throw new Error("Failed to rate mentor");
     }
   }
 }

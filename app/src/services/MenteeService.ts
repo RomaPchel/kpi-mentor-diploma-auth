@@ -19,18 +19,46 @@ export class MenteeService {
     });
   }
 
+  async getMentorsForStudent(student: User) {
+    const menteeRelations = await em.find(MentorStudent, {
+      student: student,
+    });
+
+    return (
+      menteeRelations.map((rel) => {
+        const mentor = rel.mentor;
+        return {
+          uuid: mentor.uuid,
+          name: `${mentor.firstName} ${mentor.lastName}`,
+          avatar: mentor.avatar,
+          department: mentor.department,
+          interests: mentor.interests,
+        };
+      }) ?? []
+    );
+  }
+
   async approveMenteeRequest(uuid: string, mentor: User) {
     const req = await em.findOneOrFail(BecomeMenteeRequest, {
       uuid,
-      mentor,
+      mentor: mentor,
     });
 
     req.status = MentorRequestStatus.APPROVED;
     req.processedAt = new Date();
-    await em.persistAndFlush(req);
+    await em.persist(req);
 
-    const user = await em.findOne(User, { uuid: req.user.uuid });
-    await findOrCreateChatBetween(user as User, mentor);
+    const student = await em.findOneOrFail(User, { uuid: req.user.uuid });
+
+    const relation = em.create(MentorStudent, {
+      student,
+      mentor: mentor,
+    });
+    em.persist(relation);
+
+    await findOrCreateChatBetween(student, mentor);
+
+    await em.flush();
   }
 
   async rejectMenteeRequest(uuid: string, mentor: string) {

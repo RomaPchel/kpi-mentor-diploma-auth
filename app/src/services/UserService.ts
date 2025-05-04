@@ -36,7 +36,7 @@ export class UserService {
       bio: user.bio,
       specializationCode: user.specializationCode,
       specializationTitle: user.specializationTitle,
-      formOfEducation: user.formOfEducation,
+      formOfEducation: user.formOfEducation ?? null,
       groupCode: user.groupCode,
       department: user.department,
       interests: user.interests ?? [],
