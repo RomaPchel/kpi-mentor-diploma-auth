@@ -28,7 +28,7 @@ export class MenteeController extends Router {
       this.getMentorMenteeRequest.bind(this),
     );
     this.get(
-      "/mentees",
+      "/",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
       this.getYourMentees.bind(this),

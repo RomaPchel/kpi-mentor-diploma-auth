@@ -15,7 +15,7 @@ export class UserController extends Router {
   }
 
   private setUpRoutes() {
-    this.put("/", AuthMiddleware(), this.updateUserInfo);
+    this.put("/", AuthMiddleware(), this.updateUserInfo.bind(this));
   }
 
   private async updateUserInfo(ctx: Context): Promise<void> {
