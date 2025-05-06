@@ -4,7 +4,7 @@ import { BecomeMenteeRequest } from "../entities/BecomeManteeRequest.js";
 import { findOrCreateChatBetween } from "../controllers/ChatController.js";
 import { MenteeRepository } from "../repositories/MenteeRepository.js";
 import { UserRepository } from "../repositories/UserRepository.js";
-import type { BecomeMenteeRequestResponse } from "../interfaces/UserInterface";
+import type { MenteeRequest, MenteeRequestResponse } from "../interfaces/UserInterface";
 
 export class MenteeService {
   private readonly repo: MenteeRepository;
@@ -38,7 +38,7 @@ export class MenteeService {
     await this.repo.save(req);
   }
 
-  async getRequestsByUser(userUuid: string) {
+  async getAllRequestsByUser(userUuid: string) {
     const requests = await this.repo.getAllRequestsByUserAndStatus(
       userUuid,
       MentorRequestStatus.PENDING,
@@ -53,7 +53,7 @@ export class MenteeService {
 
   private toMenteeRequestResponse(
     request: BecomeMenteeRequest,
-  ): BecomeMenteeRequestResponse {
+  ): MenteeRequestResponse {
     return {
       id: request.uuid,
       motivation: request.motivation ?? "",
@@ -68,15 +68,14 @@ export class MenteeService {
     };
   }
 
-  async becomeMentee(
+  async createRequest(
     requestingUser: User,
-    userUuid: string,
-    motivation: string,
+    request: MenteeRequest,
   ) {
-    const mentor = await this.userRepo.getUserById(userUuid);
+    const mentor = await this.userRepo.getUserById(request.mentorId);
 
     const req = await this.repo.getOneRequestByMentorAndUser(
-      userUuid,
+      request.mentorId,
       requestingUser.uuid,
     );
 
@@ -86,12 +85,14 @@ export class MenteeService {
       );
     }
 
-    const request = new BecomeMenteeRequest();
-    request.user = requestingUser;
-    request.mentor = mentor;
-    request.motivation = motivation;
-    request.status = MentorRequestStatus.PENDING;
+    const requestEntity = new BecomeMenteeRequest();
+    requestEntity.user = requestingUser;
+    requestEntity.mentor = mentor;
+    requestEntity.motivation = request.motivation;
+    requestEntity.status = MentorRequestStatus.PENDING;
 
-    return this.toMenteeRequestResponse(request);
+    await this.repo.save(requestEntity);
+
+    return this.toMenteeRequestResponse(requestEntity);
   }
 }

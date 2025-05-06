@@ -45,7 +45,7 @@ describe("MentorService", () => {
 
     mockRepo.findBecomeMentorRequestByUser.mockResolvedValue(null);
 
-    const result = await service.createBecomeMentorRequest(user, requestDto);
+    const result = await service.createRequest(user, requestDto);
 
     expect(mockRepo.findBecomeMentorRequestByUser).toHaveBeenCalledWith(
       user.uuid,
@@ -79,7 +79,7 @@ describe("MentorService", () => {
     mockRepo.findBecomeMentorRequestByUser.mockResolvedValue(existingRequest);
 
     await expect(
-      service.createBecomeMentorRequest(user, { motivation: "Again" }),
+      service.createRequest(user, { motivation: "Again" }),
     ).rejects.toThrow("You already have a pending request.");
   });
 

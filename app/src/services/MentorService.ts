@@ -4,9 +4,9 @@ import { MentorRequestStatus, UserRole } from "../enums/UserEnums.js";
 import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { MentorRepository } from "../repositories/MentorRepository.js";
 import type {
-  BecomeMentorRequestResponse,
-  CreateMentorRequest,
   MentorProfileResponse,
+  MentorRequest,
+  MentorRequestResponse,
   RateMentorRequest,
   UpdateMentorRequest,
 } from "../interfaces/UserInterface.js";
@@ -18,7 +18,7 @@ import type {
 export class MentorService {
   private readonly repo = new MentorRepository();
 
-  async createBecomeMentorRequest(user: User, req: CreateMentorRequest) {
+  async createRequest(user: User, req: MentorRequest) {
     const existingRequest = await this.repo.findBecomeMentorRequestByUser(
       user.uuid,
     );
@@ -167,7 +167,7 @@ export class MentorService {
 
   private toMentorRequestResponse(
     request: BecomeMentorRequest,
-  ): BecomeMentorRequestResponse {
+  ): MentorRequestResponse {
     return {
       id: request.uuid,
       motivation: request.motivation ?? "",

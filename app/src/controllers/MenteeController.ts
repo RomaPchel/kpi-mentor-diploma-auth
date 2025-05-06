@@ -5,6 +5,7 @@ import { UserRole } from "../enums/UserEnums.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
 import { MenteeService } from "../services/MenteeService.js";
+import { MenteeRequest } from "../interfaces/UserInterface";
 
 export class MenteeController extends Router {
   private readonly menteeService: MenteeService;
@@ -17,37 +18,33 @@ export class MenteeController extends Router {
 
   private setUpRoutes() {
     this.get(
-      "/mentee-requests",
+      "/requests",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
-      this.getMentorMenteeRequests.bind(this),
+      this.getRequests.bind(this),
     );
     this.get(
       "/",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
-      this.getYourMentees.bind(this),
+      this.getMenteesByUser.bind(this),
     );
     this.post(
-      "/mentee-request/:uuid/approve",
+      "/requests/:id/approve",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
-      this.approveMenteeRequest.bind(this),
+      this.approveRequest.bind(this),
     );
     this.post(
-      "/mentee-request/:uuid/reject",
+      "/requests/:id/reject",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
-      this.rejectMenteeRequest.bind(this),
+      this.rejectRequest.bind(this),
     );
-    this.post(
-      "/become-mentee-request",
-      AuthMiddleware(),
-      this.becomeMentee.bind(this),
-    );
+    this.post("/requests", AuthMiddleware(), this.createRequest.bind(this));
   }
 
-  private async getYourMentees(ctx: Context): Promise<void> {
+  private async getMenteesByUser(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
     if (!user) {
       ctx.throw(401, "Unauthorized");
@@ -57,62 +54,51 @@ export class MenteeController extends Router {
     ctx.status = 200;
   }
 
-  private async getMentorMenteeRequests(ctx: Context): Promise<void> {
+  private async getRequests(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
     if (!user) {
       ctx.throw(401, "Unauthorized");
     }
 
-    ctx.body = await this.menteeService.getRequestsByUser(user.uuid);
+    ctx.body = await this.menteeService.getAllRequestsByUser(user.uuid);
     ctx.status = 200;
   }
 
-  private async approveMenteeRequest(ctx: Context): Promise<void> {
+  private async approveRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
     if (!user) {
       ctx.throw(401, "Unauthorized");
     }
 
     ctx.body = await this.menteeService.approveRequest(
-      ctx.params.uuid as string,
+      ctx.params.id as string,
       user,
     );
     ctx.status = 200;
   }
 
-  private async rejectMenteeRequest(ctx: Context): Promise<void> {
+  private async rejectRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
     if (!user) {
       ctx.throw(401, "Unauthorized");
     }
 
     ctx.body = await this.menteeService.rejectRequest(
-      ctx.params.uuid as string,
+      ctx.params.id as string,
       user.uuid,
     );
     ctx.status = 200;
   }
 
-  private async becomeMentee(ctx: Context): Promise<void> {
-    try {
-      const user: User = ctx.state.user;
-      if (!user) {
-        ctx.throw(401, "Unauthorized");
-      }
-      console.log(user);
-      const { mentorUuid, motivation } = (await ctx.request.body) as {
-        mentorUuid: string;
-        motivation: string;
-      };
-
-      ctx.body = await this.menteeService.becomeMentee(
-        user,
-        mentorUuid,
-        motivation,
-      );
-      ctx.status = 201;
-    } catch (e) {
-      console.error(e);
+  private async createRequest(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    if (!user) {
+      ctx.throw(401, "Unauthorized");
     }
+
+    const request = ctx.request.body as MenteeRequest;
+
+    ctx.body = await this.menteeService.createRequest(user, request);
+    ctx.status = 201;
   }
 }

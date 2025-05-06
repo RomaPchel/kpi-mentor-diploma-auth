@@ -3,7 +3,7 @@ import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { UserRole } from "../enums/UserEnums.js";
 import type {
-  CreateMentorRequest,
+  MentorRequest,
   RateMentorRequest,
   UpdateMentorRequest,
 } from "../interfaces/UserInterface.js";
@@ -21,17 +21,9 @@ export class MentorController extends Router {
   }
 
   private setUpRoutes() {
-    this.post(
-      "/requests",
-      AuthMiddleware(),
-      this.createRequest.bind(this),
-    );
+    this.post("/requests", AuthMiddleware(), this.createRequest.bind(this));
 
-    this.get(
-      "/requests",
-      AuthMiddleware(),
-      this.getRequest.bind(this),
-    );
+    this.get("/requests", AuthMiddleware(), this.getRequest.bind(this));
 
     this.get(
       "/requests/all",
@@ -40,11 +32,7 @@ export class MentorController extends Router {
       this.getAllRequests.bind(this),
     );
 
-    this.get(
-      "/requests/:id",
-      AuthMiddleware(),
-      this.getRequestById.bind(this),
-    );
+    this.get("/requests/:id", AuthMiddleware(), this.getRequestById.bind(this));
 
     this.put(
       "/requests/:id",
@@ -68,17 +56,16 @@ export class MentorController extends Router {
   private async createRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
-    const motivation = ctx.request.body as CreateMentorRequest;
+    const request = ctx.request.body as MentorRequest;
 
-    const existingRequest =
-      await this.mentorService.getOneRequestByUser(user);
+    const existingRequest = await this.mentorService.getOneRequestByUser(user);
     if (existingRequest) {
       ctx.throw(400, "You already have a pending request.");
     }
 
-    ctx.body = await this.mentorService.createBecomeMentorRequest(
+    ctx.body = await this.mentorService.createRequest(
       user,
-      motivation,
+      request,
     );
     ctx.status = 200;
   }

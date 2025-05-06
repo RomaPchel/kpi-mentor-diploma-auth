@@ -1,6 +1,6 @@
 import { FormsOfEducation, type MentorRequestStatus } from "../enums/UserEnums";
 
-export interface CreateMentorRequest {
+export interface MentorRequest {
   motivation: string;
 }
 
@@ -42,7 +42,7 @@ export interface UserResponse {
   interests: string[];
 }
 
-export interface BecomeMentorRequestResponse {
+export interface MentorRequestResponse {
   id: string;
   motivation: string;
   status: MentorRequestStatus;
@@ -54,7 +54,7 @@ export interface BecomeMentorRequestResponse {
   };
 }
 
-export interface BecomeMenteeRequestResponse {
+export interface MenteeRequestResponse {
   id: string;
   motivation: string;
   status: MentorRequestStatus;
@@ -78,4 +78,9 @@ export interface MentorProfileResponse {
   bio: string;
   rating: number;
   totalReviews: number;
+}
+
+export interface MenteeRequest {
+  mentorId: string;
+  motivation: string;
 }

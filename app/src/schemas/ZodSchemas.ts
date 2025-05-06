@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { EventStatus } from "../enums/EventEnums.js";
-import { FormsOfEducation, MentorRequestStatus } from "../enums/UserEnums";
+import { FormsOfEducation, MentorRequestStatus } from "../enums/UserEnums.js";
 
 export const RegistrationRequestSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -160,15 +160,15 @@ export const UpdateUserSchema = z.object({
     }),
 });
 
-export const CreateBecomeMentorRequestSchema = z.object({
+export const CreateMentorRequestSchema = z.object({
   motivation: z.string().min(1, "MOTIVATION_CANNOT_BE_EMPTY").optional(),
 });
 
-export const BecomeMentorRequestIdSchema = z.object({
+export const MentorRequestIdSchema = z.object({
   id: z.string().uuid({ message: "ID_MUST_BE_VALID" }),
 });
 
-export const UpdateBecomeMentorRequestSchema = z.object({
+export const UpdateMentorRequestSchema = z.object({
   motivation: z.string().min(1, "MOTIVATION_CANNOT_BE_EMPTY").optional(),
   status: z.nativeEnum(MentorRequestStatus).optional(),
 });
@@ -224,4 +224,13 @@ export const GetAllMentorsQuerySchema = z.object({
 
 export const MentorIdSchema = z.object({
   id: z.string().uuid({ message: "ID_MUST_BE_VALID" }),
+});
+
+export const MenteeRequestIdSchema = z.object({
+  id: z.string().uuid({ message: "ID_MUST_BE_VALID" }),
+});
+
+export const CreateMenteeRequestSchema = z.object({
+  motivation: z.string().min(1, "MOTIVATION_CANNOT_BE_EMPTY").optional(),
+  mentorId: z.string().uuid({ message: "MENTOR_ID_MUST_BE_VALID" }),
 });
