@@ -21,15 +21,27 @@ export class MentorController extends Router {
   }
 
   private setUpRoutes() {
+    this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
+
     this.post("/requests", AuthMiddleware(), this.createRequest.bind(this));
 
-    this.get("/requests", AuthMiddleware(), this.getRequest.bind(this));
+    this.get(
+      "/request/user",
+      AuthMiddleware(),
+      this.getRequestByUser.bind(this),
+    );
 
     this.get(
-      "/requests/all",
+      "/requests",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
       this.getAllRequests.bind(this),
+    );
+
+    this.get(
+      "/students",
+      AuthMiddleware(),
+      this.getAllMentorStudentsByUser.bind(this),
     );
 
     this.get("/requests/:id", AuthMiddleware(), this.getRequestById.bind(this));
@@ -45,13 +57,6 @@ export class MentorController extends Router {
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
       this.deleteRequest.bind(this),
-    );
-
-    this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
-    this.get(
-      "/students",
-      AuthMiddleware(),
-      this.getAllMentorStudentsByUser.bind(this),
     );
     this.get("/:id", AuthMiddleware(), this.getOneMentor.bind(this));
     this.put("/rate/:id", AuthMiddleware(), this.rateMentor.bind(this));
@@ -71,7 +76,7 @@ export class MentorController extends Router {
     ctx.status = 200;
   }
 
-  private async getRequest(ctx: Context): Promise<void> {
+  private async getRequestByUser(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
     ctx.body = await this.mentorService.getOneRequestByUser(user);
