@@ -131,30 +131,7 @@ export class MentorController extends Router {
 
   private async getAllMentors(ctx: Context): Promise<void> {
     try {
-      const {
-        name,
-        minRating,
-        maxRating,
-        minReviews,
-        maxReviews,
-        sortBy,
-        sortOrder,
-      } = ctx.query;
-
-      const filters: Record<string, any> = {};
-
-      if (name !== undefined) filters.name = name;
-      if (minRating !== undefined) filters.minRating = Number(minRating);
-      if (maxRating !== undefined) filters.maxRating = Number(maxRating);
-      if (minReviews !== undefined) filters.minReviews = Number(minReviews);
-      if (maxReviews !== undefined) filters.maxReviews = Number(maxReviews);
-
-      const sorting: Record<string, any> = {};
-
-      if (sortBy !== undefined) sorting.sortBy = sortBy;
-      if (sortOrder !== undefined) sorting.sortOrder = sortOrder;
-
-      ctx.body = await this.mentorService.getAllMentors(filters, sorting);
+      ctx.body = await this.mentorService.getAllMentors();
       ctx.status = 200;
     } catch (e) {
       console.error(e);

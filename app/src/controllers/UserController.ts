@@ -15,7 +15,7 @@ export class UserController extends Router {
   }
 
   private setUpRoutes() {
-    this.put("/", AuthMiddleware(), this.updateUserInfo.bind(this));
+    this.post("/", AuthMiddleware(), this.updateUserInfo.bind(this));
   }
 
   private async updateUserInfo(ctx: Context): Promise<void> {
@@ -23,6 +23,7 @@ export class UserController extends Router {
       const user: User = ctx.state.user as User;
       const data = ctx.request.body as UserProfileUpdateRequest;
 
+      console.log(data);
       ctx.body = await this.userService.updateUserProfile(user, data);
       ctx.status = 201;
     } catch (e) {

@@ -33,7 +33,7 @@ export class User extends BaseEntity {
   @OneToMany(() => UserChat, (userChat) => userChat.user)
   userChats = new Collection<UserChat>(this);
 
-  @Property({ nullable: true })
+  @Property({ nullable: true, type: "text" })
   avatar!: string;
 
   @Property({ type: "text", nullable: true })

@@ -37,6 +37,7 @@ export class AuthenticationUtil {
     newUser.formOfEducation = FormsOfEducation.FULL_TIME;
     newUser.groupCode = body.groupCode;
     newUser.department = body.department;
+    newUser.interests = body.interests;
     newUser.course = body.course;
 
     await em.persist(newUser).flush();

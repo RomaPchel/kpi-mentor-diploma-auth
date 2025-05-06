@@ -86,84 +86,14 @@ export class MentorService {
     return this.toMentorRequestResponse(request);
   }
 
-  async getAllMentors(
-    filters: {
-      name?: string;
-      minRating?: number;
-      maxRating?: number;
-      minReviews?: number;
-      maxReviews?: number;
-    },
-    sorting: {
-      sortBy?: "name" | "rating" | "totalReviews";
-      sortOrder?: "asc" | "desc";
-    },
-  ) {
-    const where: any = {};
-
-    if (filters?.name) {
-      where.mentor = {
-        ...(where.mentor || {}),
-        $or: [
-          { firstName: { $ilike: `%${filters.name}%` } },
-          { lastName: { $ilike: `%${filters.name}%` } },
-        ],
-      };
-    }
-
-    if (filters?.minRating !== undefined) {
-      where.rating = { ...(where.rating || {}), $gte: filters.minRating };
-    }
-    if (filters?.maxRating !== undefined) {
-      where.rating = { ...(where.rating || {}), $lte: filters.maxRating };
-    }
-    if (filters?.minReviews !== undefined) {
-      where.totalReviews = {
-        ...(where.totalReviews || {}),
-        $gte: filters.minReviews,
-      };
-    }
-    if (filters?.maxReviews !== undefined) {
-      where.totalReviews = {
-        ...(where.totalReviews || {}),
-        $lte: filters.maxReviews,
-      };
-    }
-
-    const mentors = await em.find(MentorProfile, where, {
+  async getAllMentors() {
+    const mentors = await em.findAll(MentorProfile, {
       populate: ["mentor", "reviews.reviewer"],
     });
 
-    let result = mentors.map((mentorProfile) =>
+    return mentors.map((mentorProfile) =>
       this.toMentorProfileResponse(mentorProfile),
     );
-
-    const sortBy = sorting.sortBy ?? "name";
-    const sortOrder = sorting.sortOrder === "desc" ? -1 : 1;
-
-    result = result.sort((a, b) => {
-      let aValue, bValue;
-
-      if (sortBy === "name") {
-        aValue = a.name.toLowerCase() ?? "";
-        bValue = b.name.toLowerCase() ?? "";
-      } else if (sortBy === "rating") {
-        aValue = a.rating ?? 0;
-        bValue = b.rating ?? 0;
-      } else if (sortBy === "totalReviews") {
-        aValue = a.totalReviews ?? 0;
-        bValue = b.totalReviews ?? 0;
-      } else {
-        aValue = a.specialization ?? "";
-        bValue = b.specialization ?? "";
-      }
-
-      if (aValue! < bValue!) return -1 * sortOrder;
-      if (aValue! > bValue!) return 1 * sortOrder;
-      return 0;
-    });
-
-    return result;
   }
 
   async getOneMentor(uuid: string) {
@@ -173,7 +103,6 @@ export class MentorService {
       { populate: ["mentor", "reviews"] },
     );
 
-    console.log(mentor?.reviews);
     return this.toMentorProfileResponse(mentor as MentorProfile);
   }
 
@@ -208,6 +137,15 @@ export class MentorService {
   private toMentorProfileResponse(
     profile: MentorProfile,
   ): MentorProfileResponse {
+    const reviews = profile.reviews.getItems();
+
+    const reviewCount = reviews.length;
+
+    const average = (key: "friendliness" | "knowledge" | "communication") =>
+      reviewCount
+        ? reviews.reduce((sum, r) => sum + r[key], 0) / reviewCount
+        : 0;
+
     return {
       uuid: profile.uuid,
       mentorUuid: profile.mentor.uuid,
@@ -217,9 +155,16 @@ export class MentorService {
       name: `${profile.mentor.firstName} ${profile.mentor.lastName}`,
       specialization: profile.mentor.specializationTitle,
       bio: profile.mentor.bio,
+      department: profile.mentor.department,
       rating: profile.rating,
       totalReviews: profile.totalReviews,
-      reviews: profile.reviews.getItems().map((review) => ({
+
+      // New aggregate fields
+      avgFriendliness: average("friendliness"),
+      avgKnowledge: average("knowledge"),
+      avgCommunication: average("communication"),
+
+      reviews: reviews.map((review) => ({
         friendliness: review.friendliness,
         knowledge: review.knowledge,
         communication: review.communication,
