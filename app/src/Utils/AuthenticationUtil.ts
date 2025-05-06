@@ -32,8 +32,7 @@ export class AuthenticationUtil {
     newUser.lastName = body.lastName;
     newUser.email = body.email;
     newUser.password = body.password; //hashed before creating via @BeforeCreate
-    newUser.specializationCode = body.specializationCode;
-    newUser.specializationTitle = body.specializationTitle;
+    newUser.specialization = body.specialization;
     newUser.formOfEducation = FormsOfEducation.FULL_TIME;
     newUser.groupCode = body.groupCode;
     newUser.department = body.department;

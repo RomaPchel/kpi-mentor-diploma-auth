@@ -5,7 +5,7 @@ import { UserRole } from "../enums/UserEnums.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
 import { MenteeService } from "../services/MenteeService.js";
-import { MenteeRequest } from "../interfaces/UserInterface";
+import { CreateMenteeRequest } from "../interfaces/MenteeInterfaces.js";
 
 export class MenteeController extends Router {
   private readonly menteeService: MenteeService;
@@ -24,10 +24,9 @@ export class MenteeController extends Router {
       this.getRequests.bind(this),
     );
     this.get(
-      "/",
-      "/mentee-request/:uuid",
+      "/requests/:id",
       AuthMiddleware(),
-      this.getMentorMenteeRequest.bind(this),
+      this.getRequest.bind(this),
     );
     this.get(
       "/",
@@ -48,15 +47,6 @@ export class MenteeController extends Router {
       this.rejectRequest.bind(this),
     );
     this.post("/requests", AuthMiddleware(), this.createRequest.bind(this));
-    this.get("/my-mentors", AuthMiddleware(), this.getMyMentors.bind(this));
-  }
-
-  private async getMyMentors(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user;
-
-    const mentors = await this.menteeService.getMentorsForStudent(user);
-    ctx.body = mentors;
-    ctx.status = 200;
   }
 
   private async getMenteesByUser(ctx: Context): Promise<void> {
@@ -92,10 +82,10 @@ export class MenteeController extends Router {
     ctx.status = 200;
   }
 
-  private async getMentorMenteeRequest(ctx: Context): Promise<void> {
+  private async getRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-    const request = await this.menteeService.getMentorMenteeRequest(
-      ctx.params.uuid as string,
+    const request = await this.menteeService.getRequestByMentorAndUser(
+      ctx.params.id as string,
       user.uuid,
     );
 
@@ -126,7 +116,7 @@ export class MenteeController extends Router {
       ctx.throw(401, "Unauthorized");
     }
 
-    const request = ctx.request.body as MenteeRequest;
+    const request = ctx.request.body as CreateMenteeRequest;
 
     ctx.body = await this.menteeService.createRequest(user, request);
     ctx.status = 201;

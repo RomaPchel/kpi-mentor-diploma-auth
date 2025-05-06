@@ -21,5 +21,5 @@ export class Review extends BaseEntity {
   communication!: number;
 
   @Property({ type: "text", nullable: true })
-  comment?: string | null;
+  comment?: string;
 }

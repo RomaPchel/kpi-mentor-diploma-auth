@@ -14,10 +14,7 @@ export class UserService {
     user.email = data.email ?? user.email;
     user.avatar = data.avatar ?? user.avatar;
     user.bio = data.bio ?? user.bio;
-    user.specializationCode =
-      data.specializationCode ?? user.specializationCode;
-    user.specializationTitle =
-      data.specializationTitle ?? user.specializationTitle;
+    user.specialization = data.specialization ?? user.specialization;
     user.formOfEducation = data.formOfEducation ?? user.formOfEducation;
     user.groupCode = data.groupCode ?? user.groupCode;
     user.department = data.department ?? user.department;
@@ -36,8 +33,7 @@ export class UserService {
       email: user.email,
       avatar: user.avatar,
       bio: user.bio,
-      specializationCode: user.specializationCode,
-      specializationTitle: user.specializationTitle,
+      specialization: user.specialization,
       formOfEducation: user.formOfEducation ?? null,
       groupCode: user.groupCode,
       department: user.department,

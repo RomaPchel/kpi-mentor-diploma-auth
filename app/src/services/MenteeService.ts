@@ -4,61 +4,43 @@ import { BecomeMenteeRequest } from "../entities/BecomeManteeRequest.js";
 import { findOrCreateChatBetween } from "../controllers/ChatController.js";
 import { MenteeRepository } from "../repositories/MenteeRepository.js";
 import { UserRepository } from "../repositories/UserRepository.js";
-import type { MenteeRequest, MenteeRequestResponse } from "../interfaces/UserInterface";
+import type {
+  CreateMenteeRequest,
+  MenteeRequestResponse,
+} from "../interfaces/MenteeInterfaces.js";
+import { MentorRepository } from "../repositories/MentorRepository.js";
+import { MentorStudent } from "../entities/StudentMentor.js";
 
 export class MenteeService {
   private readonly repo: MenteeRepository;
   private readonly userRepo: UserRepository;
+  private readonly mentorRepo: MentorRepository;
 
   constructor() {
     this.repo = new MenteeRepository();
     this.userRepo = new UserRepository();
+    this.mentorRepo = new MentorRepository();
   }
 
   async getAllMenteesByUser(userUuid: string) {
     return await this.repo.getAllMenteesByUser(userUuid);
   }
 
-  async getMentorsForStudent(student: User) {
-    const menteeRelations = await em.find(MentorStudent, {
-      student: student,
-    });
-
-    return (
-      menteeRelations.map((rel) => {
-        const mentor = rel.mentor;
-        return {
-          uuid: mentor.uuid,
-          name: `${mentor.firstName} ${mentor.lastName}`,
-          avatar: mentor.avatar,
-          department: mentor.department,
-          interests: mentor.interests,
-        };
-      }) ?? []
-    );
-  }
-
-  async approveRequest(uuid: string, user: User) {
-    const req = await this.repo.getOneRequestByMentorAndUser(uuid, user.uuid);
+  async approveRequest(id: string, user: User) {
+    const req = await this.repo.getOneRequestByMentorAndUser(id, user.uuid);
 
     req.status = MentorRequestStatus.APPROVED;
     req.processedAt = new Date();
     await this.repo.save(req);
-    await em.persist(req);
-
-    const student = await em.findOneOrFail(User, { uuid: req.user.uuid });
 
     const foundUser = await this.userRepo.getUserById(user.uuid);
     await findOrCreateChatBetween(foundUser as User, user);
-    const relation = em.create(MentorStudent, {
-      student,
-      mentor: mentor,
-    });
-    em.persist(relation);
+    const relation = new MentorStudent();
+    relation.student = foundUser;
+    relation.mentor = user;
+    await this.mentorRepo.saveMentorStudent(relation);
 
-    await findOrCreateChatBetween(student, mentor);
-
-    await em.flush();
+    await findOrCreateChatBetween(foundUser, user);
   }
 
   async rejectRequest(uuid: string, userUuid: string) {
@@ -99,24 +81,11 @@ export class MenteeService {
     };
   }
 
-  async getMentorMenteeRequest(mentorUuid: string, userUuid: string) {
-    return await em.findOne(
-      BecomeMenteeRequest,
-      {
-        mentor: mentorUuid,
-        user: userUuid,
-        status: MentorRequestStatus.PENDING,
-      },
-      {
-        orderBy: { createdAt: "DESC" },
-      },
-    );
+  async getRequestByMentorAndUser(mentorUuid: string, userUuid: string) {
+    return await this.repo.getOneRequestByMentorAndUser(mentorUuid, userUuid);
   }
 
-  async createRequest(
-    requestingUser: User,
-    request: MenteeRequest,
-  ) {
+  async createRequest(requestingUser: User, request: CreateMenteeRequest) {
     const mentor = await this.userRepo.getUserById(request.mentorId);
 
     const req = await this.repo.getOneRequestByMentorAndUser(

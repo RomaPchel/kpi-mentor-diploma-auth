@@ -5,8 +5,7 @@ export interface RegistrationRequestBody {
   password: string;
   firstName: string;
   lastName: string;
-  specializationCode: number;
-  specializationTitle: string;
+  specialization: string;
   formOfEducation: FormsOfEducation;
   groupCode: string;
   interests: string[];

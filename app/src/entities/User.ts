@@ -40,10 +40,7 @@ export class User extends BaseEntity {
   bio!: string;
 
   @Property({ nullable: true })
-  specializationCode!: number;
-
-  @Property({ nullable: true })
-  specializationTitle!: string;
+  specialization!: string;
 
   @Enum(() => FormsOfEducation)
   formOfEducation!: FormsOfEducation;

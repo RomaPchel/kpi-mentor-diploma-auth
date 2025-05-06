@@ -3,10 +3,10 @@ import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { UserRole } from "../enums/UserEnums.js";
 import type {
-  MentorRequest,
+  CreateMentorRequest,
   RateMentorRequest,
   UpdateMentorRequest,
-} from "../interfaces/UserInterface.js";
+} from "../interfaces/MentorInterfaces.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
 import { MentorService } from "../services/MentorService.js";
@@ -48,6 +48,11 @@ export class MentorController extends Router {
     );
 
     this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
+    this.get(
+      "/students",
+      AuthMiddleware(),
+      this.getAllMentorStudentsByUser.bind(this),
+    );
     this.get("/:id", AuthMiddleware(), this.getOneMentor.bind(this));
     this.put("/rate/:id", AuthMiddleware(), this.rateMentor.bind(this));
   }
@@ -55,17 +60,14 @@ export class MentorController extends Router {
   private async createRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
-    const request = ctx.request.body as MentorRequest;
+    const request = ctx.request.body as CreateMentorRequest;
 
     const existingRequest = await this.mentorService.getOneRequestByUser(user);
     if (existingRequest) {
       ctx.throw(400, "You already have a pending request.");
     }
 
-    ctx.body = await this.mentorService.createRequest(
-      user,
-      request,
-    );
+    ctx.body = await this.mentorService.createRequest(user, request);
     ctx.status = 200;
   }
 
@@ -121,6 +123,13 @@ export class MentorController extends Router {
     ctx.status = 200;
   }
 
+  private async getAllMentorStudentsByUser(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+
+    ctx.body = await this.mentorService.getMentorsByUser(user);
+    ctx.status = 200;
+  }
+
   private async getAllMentors(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
     if (!user) {
@@ -169,7 +178,7 @@ export class MentorController extends Router {
     if (!user) {
       ctx.throw(401, "Unauthorized");
     }
-    const uuid = ctx.params.uuid;
+    const uuid = ctx.params.id;
     const rateRequest = ctx.request.body as RateMentorRequest;
 
     await this.mentorService.rateMentor(uuid, user, rateRequest);

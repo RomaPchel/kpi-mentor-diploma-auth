@@ -1,22 +1,4 @@
-import { FormsOfEducation, type MentorRequestStatus } from "../enums/UserEnums";
-import type { Review } from "../entities/MentorReview.js";
-
-export interface MentorRequest {
-  motivation: string;
-}
-
-export interface RateMentorRequest {
-  mentorUuid: string;
-  friendliness: number;
-  knowledge: number;
-  communication: number;
-  comment?: string;
-}
-
-export interface UpdateMentorRequest {
-  motivation: string;
-  status: MentorRequestStatus;
-}
+import { FormsOfEducation } from "../enums/UserEnums";
 
 export interface UserUpdateRequest {
   firstName?: string;
@@ -24,8 +6,7 @@ export interface UserUpdateRequest {
   email?: string;
   avatar?: string;
   bio?: string;
-  specializationCode?: number;
-  specializationTitle?: string;
+  specialization?: string;
   formOfEducation?: FormsOfEducation;
   groupCode?: string;
   department?: string;
@@ -39,55 +20,9 @@ export interface UserResponse {
   email: string;
   avatar: string;
   bio?: string;
-  specializationCode: number;
-  specializationTitle: string;
+  specialization: string;
   formOfEducation?: string;
   groupCode: string;
   department: string;
   interests: string[];
-}
-
-export interface MentorRequestResponse {
-  id: string;
-  motivation: string;
-  status: MentorRequestStatus;
-  createdAt: Date;
-  user: {
-    uuid: string;
-    avatar: string;
-    name: string;
-    email: string;
-  };
-}
-
-export interface MenteeRequestResponse {
-  id: string;
-  motivation: string;
-  status: MentorRequestStatus;
-  createdAt: Date;
-  user: {
-    uuid: string;
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}
-
-export interface MentorProfileResponse {
-  uuid: string;
-  name: string;
-  avatar: string;
-  mentorUuid: string;
-  email: string;
-  interests: string[];
-  specialization: string;
-  bio: string;
-  rating: number;
-  totalReviews: number;
-  reviews: Review[];
-}
-
-export interface MenteeRequest {
-  mentorId: string;
-  motivation: string;
 }
