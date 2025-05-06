@@ -10,6 +10,8 @@ import type {
   RateMentorRequest,
   UpdateMentorRequest,
 } from "../interfaces/UserInterface.js";
+import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
+import { Review } from "../entities/MentorReview.js";
 
 /**
  * A service class that manages mentor-related operations, including creating,
@@ -73,6 +75,25 @@ export class MentorService {
     await this.repo.saveBecomeMentorRequest(request);
 
     return this.toMentorRequestResponse(request);
+
+    if (data.status === MentorRequestStatus.APPROVED) {
+      // Check if mentor profile already exists
+      const existingProfile = await em.findOne(MentorProfile, {
+        mentor: request.user,
+      });
+
+      // Create new profile only if one doesn't already exist
+      if (!existingProfile) {
+        const mentorProfile = new MentorProfile();
+        mentorProfile.mentor = request.user;
+        mentorProfile.rating = 0;
+        mentorProfile.totalReviews = 0;
+        await em.persist(mentorProfile);
+      }
+
+      // Set user role to MENTOR
+      request.user.role = UserRole.MENTOR;
+    }
   }
 
   async getAllMentors(
@@ -174,6 +195,7 @@ export class MentorService {
       status: request.status,
       createdAt: request.createdAt,
       user: {
+        avatar: request.user.avatar,
         uuid: request.user.uuid,
         name: `${request.user.firstName} ${request.user.lastName}`,
         email: request.user.email,
@@ -184,6 +206,15 @@ export class MentorService {
   private toMentorProfileResponse(
     profile: MentorProfile,
   ): MentorProfileResponse {
+    const reviews = profile.reviews.getItems();
+
+    const reviewCount = reviews.length;
+
+    const average = (key: "friendliness" | "knowledge" | "communication") =>
+      reviewCount
+        ? reviews.reduce((sum, r) => sum + r[key], 0) / reviewCount
+        : 0;
+
     return {
       uuid: profile.uuid,
       mentorUuid: profile.mentor.uuid,
@@ -193,24 +224,89 @@ export class MentorService {
       name: `${profile.mentor.firstName} ${profile.mentor.lastName}`,
       specialization: profile.mentor.specializationTitle,
       bio: profile.mentor.bio,
+      department: profile.mentor.department,
       rating: profile.rating,
       totalReviews: profile.totalReviews,
+
+      // New aggregate fields
+      avgFriendliness: average("friendliness"),
+      avgKnowledge: average("knowledge"),
+      avgCommunication: average("communication"),
+
+      reviews: reviews.map((review) => ({
+        friendliness: review.friendliness,
+        knowledge: review.knowledge,
+        communication: review.communication,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        reviewer: {
+          firstName: review.reviewer.firstName,
+          lastName: review.reviewer.lastName,
+          uuid: review.reviewer.uuid,
+        },
+      })),
     };
   }
 
-  async rateMentor(uuid: string, rateRequest: RateMentorRequest) {
-    const mentor = await this.repo.findMentorProfileById(uuid);
-    if (!mentor) throw new Error("Mentor not found");
+  async rateMentor(
+    uuid: string,
+    reviewer: User,
+    rateRequest: RateMentorRequest,
+  ) {
+    try {
+      const mentor = await em.findOne(
+        MentorProfile,
+        { mentor: uuid },
+        { populate: ["mentor"] },
+      );
 
-    if (mentor.rating < 0) {
-      mentor.rating = rateRequest.rating;
-      mentor.totalReviews++;
-    } else {
-      const sum = mentor.rating * mentor.totalReviews + rateRequest.rating;
-      mentor.rating = sum / (mentor.totalReviews + 1);
-      mentor.totalReviews++;
+      if (!mentor) {
+        throw new Error("Mentor not found");
+      }
+
+      // Check for existing review
+      let review = await em.findOne(Review, {
+        mentor,
+        reviewer,
+      });
+
+      if (review) {
+        review.friendliness = rateRequest.friendliness;
+        review.knowledge = rateRequest.knowledge;
+        review.communication = rateRequest.communication;
+        review.comment = rateRequest.comment ?? null;
+      } else {
+        review = em.create(Review, {
+          mentor,
+          reviewer,
+          friendliness: rateRequest.friendliness,
+          knowledge: rateRequest.knowledge,
+          communication: rateRequest.communication,
+          comment: rateRequest.comment ?? null,
+        });
+      }
+
+      await em.persistAndFlush(review);
+
+      // Recalculate rating
+      const reviews = await em.find(Review, { mentor });
+      const total = reviews.length;
+
+      const avg = (key: keyof Review) =>
+        reviews.reduce((sum, r) => sum + (r[key] as number), 0) / total;
+
+      mentor.rating =
+        Math.round(
+          ((avg("friendliness") + avg("knowledge") + avg("communication")) /
+            3) *
+            10,
+        ) / 10;
+      mentor.totalReviews = total;
+
+      await em.persistAndFlush(mentor);
+    } catch (e) {
+      console.error(e);
+      throw new Error("Failed to rate mentor");
     }
-
-    await this.repo.saveMentorProfile(mentor);
   }
 }

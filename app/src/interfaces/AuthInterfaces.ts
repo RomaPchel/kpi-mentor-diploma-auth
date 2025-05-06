@@ -9,6 +9,7 @@ export interface RegistrationRequestBody {
   specializationTitle: string;
   formOfEducation: FormsOfEducation;
   groupCode: string;
+  interests: string[];
   department: string;
   course: number;
 }

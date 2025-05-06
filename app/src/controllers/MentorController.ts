@@ -40,7 +40,6 @@ export class MentorController extends Router {
       roleMiddleware(UserRole.ADMIN),
       this.updateRequest.bind(this),
     );
-
     this.delete(
       "/requests/:id",
       AuthMiddleware(),
@@ -173,7 +172,7 @@ export class MentorController extends Router {
     const uuid = ctx.params.uuid;
     const rateRequest = ctx.request.body as RateMentorRequest;
 
-    await this.mentorService.rateMentor(uuid, rateRequest);
+    await this.mentorService.rateMentor(uuid, user, rateRequest);
     ctx.status = 200;
   }
 }

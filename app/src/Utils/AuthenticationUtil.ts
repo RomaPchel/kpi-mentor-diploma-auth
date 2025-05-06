@@ -28,8 +28,6 @@ export class AuthenticationUtil {
 
     const newUser: User = new User();
 
-    console.log(body);
-
     newUser.firstName = body.firstName;
     newUser.lastName = body.lastName;
     newUser.email = body.email;
@@ -39,6 +37,7 @@ export class AuthenticationUtil {
     newUser.formOfEducation = FormsOfEducation.FULL_TIME;
     newUser.groupCode = body.groupCode;
     newUser.department = body.department;
+    newUser.interests = body.interests;
     newUser.course = body.course;
 
     await em.persist(newUser).flush();

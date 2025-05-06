@@ -25,6 +25,12 @@ export class MenteeController extends Router {
     );
     this.get(
       "/",
+      "/mentee-request/:uuid",
+      AuthMiddleware(),
+      this.getMentorMenteeRequest.bind(this),
+    );
+    this.get(
+      "/",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
       this.getMenteesByUser.bind(this),
@@ -42,6 +48,15 @@ export class MenteeController extends Router {
       this.rejectRequest.bind(this),
     );
     this.post("/requests", AuthMiddleware(), this.createRequest.bind(this));
+    this.get("/my-mentors", AuthMiddleware(), this.getMyMentors.bind(this));
+  }
+
+  private async getMyMentors(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+
+    const mentors = await this.menteeService.getMentorsForStudent(user);
+    ctx.body = mentors;
+    ctx.status = 200;
   }
 
   private async getMenteesByUser(ctx: Context): Promise<void> {
@@ -65,7 +80,7 @@ export class MenteeController extends Router {
   }
 
   private async approveRequest(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user;
+   const user: User = ctx.state.user;
     if (!user) {
       ctx.throw(401, "Unauthorized");
     }
@@ -74,6 +89,21 @@ export class MenteeController extends Router {
       ctx.params.id as string,
       user,
     );
+    ctx.status = 200;
+  }
+
+  private async getMentorMenteeRequest(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    const request = await this.menteeService.getMentorMenteeRequest(
+      ctx.params.uuid as string,
+      user.uuid,
+    );
+
+    if (!request) {
+      ctx.throw(400, "No request");
+    }
+
+    ctx.body = request;
     ctx.status = 200;
   }
 
