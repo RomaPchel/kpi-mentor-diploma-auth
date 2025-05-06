@@ -104,10 +104,7 @@ export class MentorController extends Router {
   }
 
   private async updateBecomeMentorRequest(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user as User;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
+    console.log("ADSDASDASDAS");
 
     const id = ctx.params.id;
 

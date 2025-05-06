@@ -43,7 +43,7 @@ export class MentorService {
   async getAllBecomeMentorRequests() {
     const requests = await em.find(
       BecomeMentorRequest,
-      {},
+      { status: MentorRequestStatus.PENDING },
       { populate: ["user"] },
     );
     return requests.map(this.toMentorRequestResponse);
@@ -71,11 +71,22 @@ export class MentorService {
     if (!request) throw new Error("Mentor request not found.");
 
     if (data.status === MentorRequestStatus.APPROVED) {
-      const mentorProfile = new MentorProfile();
-      mentorProfile.mentor = request.user;
-      mentorProfile.rating = -1;
-      mentorProfile.totalReviews = 0;
-      await em.persistAndFlush(mentorProfile);
+      // Check if mentor profile already exists
+      const existingProfile = await em.findOne(MentorProfile, {
+        mentor: request.user,
+      });
+
+      // Create new profile only if one doesn't already exist
+      if (!existingProfile) {
+        const mentorProfile = new MentorProfile();
+        mentorProfile.mentor = request.user;
+        mentorProfile.rating = 0;
+        mentorProfile.totalReviews = 0;
+        await em.persist(mentorProfile);
+      }
+
+      // Set user role to MENTOR
+      request.user.role = UserRole.MENTOR;
     }
 
     if (data.status) request.status = data.status;
@@ -122,11 +133,12 @@ export class MentorService {
     request: BecomeMentorRequest,
   ): BecomeMentorRequestResponse {
     return {
-      id: request.uuid,
+      uuid: request.uuid,
       motivation: request.motivation ?? "",
       status: request.status,
       createdAt: request.createdAt,
       user: {
+        avatar: request.user.avatar,
         uuid: request.user.uuid,
         name: `${request.user.firstName} ${request.user.lastName}`,
         email: request.user.email,

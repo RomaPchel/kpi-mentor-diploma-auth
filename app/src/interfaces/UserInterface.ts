@@ -48,12 +48,13 @@ export interface UserProfileResponse {
 }
 
 export interface BecomeMentorRequestResponse {
-  id: string;
+  uuid: string;
   motivation: string;
   status: MentorRequestStatus;
   createdAt: Date;
   user: {
     uuid: string;
+    avatar: string;
     name: string;
     email: string;
   };
