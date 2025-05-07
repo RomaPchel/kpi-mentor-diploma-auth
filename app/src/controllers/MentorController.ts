@@ -26,6 +26,11 @@ export class MentorController extends Router {
       AuthMiddleware(),
       this.createBecomeMentorRequest.bind(this),
     );
+    this.post(
+      "/:uuid/report",
+      AuthMiddleware(),
+      this.createFeedback.bind(this),
+    );
     this.get(
       "/become-mentor-request",
       AuthMiddleware(),
@@ -75,6 +80,28 @@ export class MentorController extends Router {
       motivation,
     );
     ctx.status = 200;
+  }
+
+  private async createFeedback(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    const mentorUuid = ctx.params.uuid;
+    console.log(ctx.request.body);
+    const { message, anonymous } = ctx.request.body as {
+      message: string;
+      anonymous?: boolean;
+    };
+
+    if (!message || typeof message !== "string") {
+      ctx.throw(400, "Feedback message is required.");
+    }
+
+    ctx.body = await this.mentorService.createFeedback(
+      user,
+      mentorUuid,
+      message,
+      !!anonymous,
+    );
+    ctx.status = 201;
   }
 
   private async getOwnBecomeMentorRequest(ctx: Context): Promise<void> {
@@ -128,6 +155,7 @@ export class MentorController extends Router {
 
   private async getAllMentors(ctx: Context): Promise<void> {
     try {
+      console.log(await this.mentorService.getAllMentors());
       ctx.body = await this.mentorService.getAllMentors();
       ctx.status = 200;
     } catch (e) {

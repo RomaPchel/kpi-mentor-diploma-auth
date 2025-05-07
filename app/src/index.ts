@@ -66,3 +66,5 @@ app
 server.listen(3000, () => {
   console.log(`Auth server is running on port 3000`);
 });
+
+await orm.getSchemaGenerator().updateSchema();

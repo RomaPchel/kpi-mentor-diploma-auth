@@ -11,6 +11,9 @@ import type {
 } from "../interfaces/UserInterface.js";
 import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { Review } from "../entities/MentorReview.js";
+import { MentorStudent } from "../entities/StudentMentor.js";
+import { UserChat } from "../entities/chat/UserChat.js";
+import { Feedback } from "../entities/Feedback.js";
 
 export class MentorService {
   async createBecomeMentorRequest(user: User, req: CreateMentorRequest) {
@@ -29,6 +32,37 @@ export class MentorService {
     await em.persistAndFlush(request);
 
     return this.toMentorRequestResponse(request);
+  }
+
+  async createFeedback(
+    user: User,
+    mentorUuid: string,
+    message: string,
+    anonymous: boolean,
+  ) {
+    const mentor = await em.findOneOrFail(MentorProfile, {
+      mentor: mentorUuid,
+    });
+
+    const alreadyReported = await em.findOne(Feedback, {
+      mentor,
+      author: user,
+    });
+
+    if (alreadyReported) {
+      throw new Error("You have already submitted a report for this mentor.");
+    }
+
+    const feedback = em.create(Feedback, {
+      author: user,
+      mentor,
+      message,
+      anonymous,
+      reviewedByAdmin: false,
+    });
+
+    await em.persistAndFlush(feedback);
+    return feedback;
   }
 
   async getOwnBecomeMentorRequest(user: User) {
@@ -102,8 +136,10 @@ export class MentorService {
       populate: ["mentor", "reviews.reviewer"],
     });
 
-    return mentors.map((mentorProfile) =>
-      this.toMentorProfileResponse(mentorProfile),
+    return await Promise.all(
+      mentors.map((mentorProfile) =>
+        this.toMentorProfileResponse(mentorProfile),
+      ),
     );
   }
 
@@ -114,7 +150,7 @@ export class MentorService {
       { populate: ["mentor", "reviews"] },
     );
 
-    return this.toMentorProfileResponse(mentor as MentorProfile);
+    return await this.toMentorProfileResponse(mentor as MentorProfile);
   }
 
   async deleteById(id: string) {
@@ -146,9 +182,9 @@ export class MentorService {
     };
   }
 
-  private toMentorProfileResponse(
+  private async toMentorProfileResponse(
     profile: MentorProfile,
-  ): MentorProfileResponse {
+  ): Promise<MentorProfileResponse> {
     const reviews = profile.reviews.getItems();
 
     const reviewCount = reviews.length;
@@ -157,6 +193,14 @@ export class MentorService {
       reviewCount
         ? reviews.reduce((sum, r) => sum + r[key], 0) / reviewCount
         : 0;
+
+    const mentorStudents = await em.find(MentorStudent, {
+      mentor: profile.mentor,
+    });
+
+    const chats = await em.find(UserChat, {
+      user: profile.mentor,
+    });
 
     return {
       uuid: profile.uuid,
@@ -171,11 +215,11 @@ export class MentorService {
       rating: profile.rating,
       totalReviews: profile.totalReviews,
 
-      // New aggregate fields
       avgFriendliness: average("friendliness"),
       avgKnowledge: average("knowledge"),
       avgCommunication: average("communication"),
 
+      //@ts-ignore
       reviews: reviews.map((review) => ({
         friendliness: review.friendliness,
         knowledge: review.knowledge,
@@ -188,6 +232,12 @@ export class MentorService {
           uuid: review.reviewer.uuid,
         },
       })),
+      stats: {
+        totalMentees: mentorStudents.length,
+        totalSessions: chats.length,
+        levelTitle: profile.getLevelTitle(),
+        level: profile.level,
+      },
     };
   }
 
@@ -200,7 +250,7 @@ export class MentorService {
       const mentor = await em.findOne(
         MentorProfile,
         { mentor: uuid },
-        { populate: ["mentor"] },
+        { populate: ["mentor", "reviews"] }, // Make sure reviews are loaded
       );
 
       if (!mentor) {
@@ -231,20 +281,7 @@ export class MentorService {
 
       await em.persistAndFlush(review);
 
-      // Recalculate rating
-      const reviews = await em.find(Review, { mentor });
-      const total = reviews.length;
-
-      const avg = (key: keyof Review) =>
-        reviews.reduce((sum, r) => sum + (r[key] as number), 0) / total;
-
-      mentor.rating =
-        Math.round(
-          ((avg("friendliness") + avg("knowledge") + avg("communication")) /
-            3) *
-            10,
-        ) / 10;
-      mentor.totalReviews = total;
+      await mentor.updateRating();
 
       await em.persistAndFlush(mentor);
     } catch (e) {

@@ -56,8 +56,7 @@ export class MenteeController extends Router {
   private async getMyMentors(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
 
-    const mentors = await this.menteeService.getMentorsForStudent(user);
-    ctx.body = mentors;
+    ctx.body = await this.menteeService.getMentorsForStudent(user);
     ctx.status = 200;
   }
 
