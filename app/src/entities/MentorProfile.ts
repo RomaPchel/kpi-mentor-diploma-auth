@@ -37,54 +37,60 @@ export class MentorProfile extends BaseEntity {
     const now = new Date();
     const decayMonths = 6;
 
-    // --- WeightedReviewScore with time decay ---
+    // --- Time-decayed review weighting ---
     const reviewWeights = reviews.map((review) => {
       const ageInMonths =
         (now.getTime() - review.createdAt.getTime()) /
         (1000 * 60 * 60 * 24 * 30);
-      const weight = Math.exp(-ageInMonths / decayMonths);
+      const decayWeight = Math.exp(-ageInMonths / decayMonths);
       const avgScore =
         (review.friendliness + review.knowledge + review.communication) / 3;
-      return { weight, avgScore };
+      return { decayWeight, avgScore };
     });
 
-    const totalWeight = reviewWeights.reduce((sum, r) => sum + r.weight, 0);
-    const weightedScore =
-      reviewWeights.reduce((sum, r) => sum + r.avgScore * r.weight, 0) /
+    const totalWeight = reviewWeights.reduce(
+      (sum, r) => sum + r.decayWeight,
+      0,
+    );
+    const weightedReviewAvg =
+      reviewWeights.reduce((sum, r) => sum + r.avgScore * r.decayWeight, 0) /
       (totalWeight || 1);
 
-    const chats = await em.find(UserChat, {
-      user: this.uuid,
-    });
-    // --- EngagementScore ---
-    const maxExpectedSessions = 50;
+    // --- Bayesian Smoothing ---
+    const priorMean = 5.5; // Increased from 4.0
+    const priorWeight = 3;
+    const bayesianAverage =
+      (priorMean * priorWeight + weightedReviewAvg * reviews.length) /
+      (priorWeight + reviews.length);
+
+    // --- Engagement score ---
+    const chats = await em.find(UserChat, { user: this.uuid });
+    const maxSessions = 50;
     const engagementScore = Math.min(
-      Math.log(1 + chats.length) / Math.log(1 + maxExpectedSessions),
+      Math.log(1 + chats.length) / Math.log(1 + maxSessions),
       1,
     );
 
-    // --- ConsistencyScore (standard deviation) ---
+    // --- Consistency score ---
     const allScores = reviews.map(
       (r) => (r.friendliness + r.knowledge + r.communication) / 3,
     );
-    const avg = allScores.reduce((a, b) => a + b, 0) / allScores.length;
+    const mean = allScores.reduce((a, b) => a + b, 0) / allScores.length;
     const stdDev = Math.sqrt(
-      allScores.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) /
+      allScores.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
         allScores.length,
     );
-    const consistencyScore = 1 - Math.min(stdDev / 5, 1);
+    const consistencyScore = 1 - Math.min(stdDev / 2, 1); // tighter scale
 
+    // --- Activity score ---
+    const mentorMessages = await em.find(ChatMessage, {
+      sender: this.mentor,
+    });
     const profileCompleted =
       this.mentor.avatar &&
       this.mentor.interests &&
       this.mentor.department &&
       this.mentor.bio;
-
-    const mentorMessages = await em.find(ChatMessage, {
-      sender: this.mentor,
-    });
-
-    // --- ActivityScore ---
     const activityScore =
       [
         profileCompleted ? 1 : 0,
@@ -92,22 +98,23 @@ export class MentorProfile extends BaseEntity {
         chats.length > 0 ? 1 : 0,
       ].reduce((a, b) => a + b, 0) / 3;
 
-    // --- TenureBonus ---
-    const created = this.createdAt ?? new Date(); // fallback
-    const months =
+    // --- Tenure bonus ---
+    const created = this.createdAt ?? new Date();
+    const monthsSinceCreated =
       (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    const tenureBonus = Math.min(months / 24, 1); // cap after 2 years
+    const tenureBase = Math.min(monthsSinceCreated / 24, 1);
+    const tenureBonus = Math.max(tenureBase, 0.1); // minimum 0.1 for brand new mentors
 
-    // --- Final Rating ---
+    // --- Final rating (weights) ---
     const finalRating =
-      0.4 * weightedScore +
-      0.2 * engagementScore +
-      0.2 * consistencyScore +
+      0.55 * bayesianAverage +
+      0.15 * engagementScore +
       0.1 * activityScore +
+      0.1 * consistencyScore +
       0.1 * tenureBonus;
 
-    this.totalReviews = reviews.length;
     this.rating = parseFloat(finalRating.toFixed(2));
+    this.totalReviews = reviews.length;
     this.updateLevel();
   }
 
