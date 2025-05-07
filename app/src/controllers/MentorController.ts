@@ -21,7 +21,7 @@ export class MentorController extends Router {
   }
 
   private setUpRoutes() {
-    this.get("", AuthMiddleware(), this.getAllMentors.bind(this));
+    this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
 
     this.post("/requests", AuthMiddleware(), this.createRequest.bind(this));
 

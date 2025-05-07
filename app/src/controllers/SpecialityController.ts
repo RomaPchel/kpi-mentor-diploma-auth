@@ -2,10 +2,7 @@ import Router from "koa-router";
 import type { Context } from "koa";
 import { SpecialityService } from "../services/SpecialityService.js";
 import { ZodError } from "zod";
-
-interface HttpError extends Error {
-  status?: number;
-}
+import { HttpError } from "../errors/HttpError.js";
 
 export class SpecialityController extends Router {
   private readonly specialityService: SpecialityService;

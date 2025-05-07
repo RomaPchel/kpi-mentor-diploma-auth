@@ -8,10 +8,7 @@ import { AuthenticationUtil } from "../Utils/AuthenticationUtil.js";
 import type { User } from "../entities/User.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { ZodError } from "zod";
-
-interface HttpError extends Error {
-  status?: number;
-}
+import { HttpError } from "../errors/HttpError.js";
 
 export class AuthController extends Router {
   constructor() {

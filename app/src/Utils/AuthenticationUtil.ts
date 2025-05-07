@@ -9,6 +9,7 @@ import { em } from "../db/config.js";
 import { compare } from "bcrypt";
 import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
 import { FormsOfEducation, TokenExpiration } from "../enums/UserEnums.js";
+import { HttpError } from "../errors/HttpError.js";
 
 export class AuthenticationUtil {
   public static readonly ACCESS_SECRET = process.env
@@ -23,7 +24,7 @@ export class AuthenticationUtil {
     });
 
     if (existingUser) {
-      throw new Error("User already exists");
+      throw new HttpError("User already exists", 400);
     }
 
     const newUser: User = new User();
