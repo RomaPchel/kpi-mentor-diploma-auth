@@ -19,7 +19,7 @@ export interface MentorProfileResponse {
 }
 
 export interface MentorRequestResponse {
-  id: string;
+  uuid: string;
   motivation: string;
   status: MentorRequestStatus;
   createdAt: Date;

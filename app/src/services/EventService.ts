@@ -91,7 +91,7 @@ export class EventService {
     let result = events.map((event) => this.toEventResponse(event));
 
     const sortBy = sorting.sortBy ?? "timestamp";
-    const sortOrder = sorting.sortOrder === "desc" ? -1 : 1;
+    const sortOrder = sorting.sortOrder !== "asc" ? -1 : 1;
 
     result = result.sort((a, b) => {
       let aValue, bValue;
@@ -99,12 +99,16 @@ export class EventService {
       if (sortBy === "status") {
         aValue = a.status.toLowerCase() ?? "";
         bValue = b.status.toLowerCase() ?? "";
+      } else if (sortBy === "timestamp") {
+        aValue = new Date(a.timestamp).getTime();
+        bValue = new Date(b.timestamp).getTime();
       }
 
-      if (aValue! < bValue!) return -1 * sortOrder;
-      if (aValue! > bValue!) return 1 * sortOrder;
+      if (aValue < bValue) return -1 * sortOrder;
+      if (aValue > bValue) return 1 * sortOrder;
       return 0;
     });
+
 
     return result;
   }

@@ -6,7 +6,7 @@ import type {
 } from "../interfaces/UserInterface.js";
 
 export class UserService {
-  private readonly userRepository = new UserRepository();
+  private readonly repo = new UserRepository();
 
   async updateUser(user: User, data: UserUpdateRequest) {
     user.firstName = data.firstName ?? user.firstName;
@@ -20,7 +20,7 @@ export class UserService {
     user.department = data.department ?? user.department;
     user.interests = data.interests ?? user.interests;
 
-    await this.userRepository.save(user);
+    await this.repo.save(user);
 
     return this.toUserProfileResponse(user);
   }
@@ -39,5 +39,10 @@ export class UserService {
       department: user.department,
       interests: user.interests ?? [],
     };
+  }
+
+  async getAllUsers() {
+    const users = await this.repo.findAll()
+    return users.map(this.toUserProfileResponse);
   }
 }

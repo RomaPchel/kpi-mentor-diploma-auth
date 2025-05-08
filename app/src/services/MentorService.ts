@@ -197,7 +197,7 @@ export class MentorService {
     request: BecomeMentorRequest,
   ): MentorRequestResponse {
     return {
-      id: request.uuid,
+      uuid: request.uuid,
       motivation: request.motivation ?? "",
       status: request.status,
       createdAt: request.createdAt,

@@ -15,10 +15,11 @@ export class UserController extends Router {
   }
 
   private setUpRoutes() {
-    this.put("/", AuthMiddleware(), this.updateUserInfo);
+    this.put("/", AuthMiddleware(), this.updateUser.bind(this));
+    this.get("/", AuthMiddleware(), this.getAllUsers.bind(this));
   }
 
-  private async updateUserInfo(ctx: Context): Promise<void> {
+  private async updateUser(ctx: Context): Promise<void> {
     try {
       const user: User = ctx.state.user as User;
       const data = ctx.request.body as UserUpdateRequest;
@@ -28,5 +29,11 @@ export class UserController extends Router {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  private async getAllUsers(ctx: Context): Promise<void> {
+    const users = await this.userService.getAllUsers();
+    ctx.status = 200;
+    ctx.body = users;
   }
 }

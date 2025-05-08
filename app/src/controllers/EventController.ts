@@ -3,16 +3,11 @@ import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { validate } from "class-validator";
 import { EventService } from "../services/EventService.js";
-import { ZodError } from "zod";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import type {
   CreateEventRequest,
   UpdateEventRequest,
 } from "../interfaces/EventInterfaces.js";
-
-interface HttpError extends Error {
-  status?: number;
-}
 
 export class EventController extends Router {
   private readonly eventService: EventService;
@@ -31,150 +26,77 @@ export class EventController extends Router {
   }
 
   private async createEvent(ctx: Context): Promise<void> {
-    try {
-      const user: User = ctx.state.user as User;
-      if (!user) {
-        ctx.throw(401, "Unauthorized");
-      }
+    const user: User = ctx.state.user as User;
 
-      const createEventRequest = ctx.request.body as CreateEventRequest;
+    const createEventRequest = ctx.request.body as CreateEventRequest;
 
-      const eventResponse = await this.eventService.createEvent(
-        createEventRequest,
-        user,
-      );
+    const eventResponse = await this.eventService.createEvent(
+      createEventRequest,
+      user,
+    );
 
-      ctx.status = 201;
-      ctx.body = eventResponse;
-    } catch (e: unknown) {
-      if (e instanceof ZodError) {
-        ctx.status = 400;
-        ctx.body = {
-          error: "Validation error",
-          details: e.errors,
-        };
-      } else {
-        const error = e as HttpError;
-        ctx.status = error.status ?? 500;
-        ctx.body = { error: error.message || "Internal server error" };
-      }
-    }
+    ctx.status = 201;
+    ctx.body = eventResponse;
   }
 
   private async getEvent(ctx: Context): Promise<void> {
-    try {
-      const user: User = ctx.state.user as User;
-      if (!user) {
-        ctx.throw(401, "Unauthorized");
-      }
-      const eventId = ctx.params.id;
-      const eventResponse = await this.eventService.getEventById(eventId);
+    const eventId = ctx.params.id;
+    const eventResponse = await this.eventService.getEventById(eventId);
 
-      if (!eventResponse) {
-        ctx.throw(404, "Event not found");
-      }
-
-      ctx.status = 200;
-      ctx.body = eventResponse;
-    } catch (e: unknown) {
-      if (e instanceof ZodError) {
-        ctx.status = 400;
-        ctx.body = {
-          error: "Validation error",
-          details: e.errors,
-        };
-      } else {
-        const error = e as HttpError;
-        ctx.status = error.status ?? 500;
-        ctx.body = { error: error.message || "Internal server error" };
-      }
+    if (!eventResponse) {
+      ctx.throw(404, "Event not found");
     }
+
+    ctx.status = 200;
+    ctx.body = eventResponse;
   }
 
   private async getAllEvents(ctx: Context): Promise<void> {
-    try {
-      const user: User = ctx.state.user as User;
-      if (!user) {
-        ctx.throw(401, "Unauthorized");
-      }
+    const user: User = ctx.state.user as User;
 
-      const { userIds, status, minTimestamp, maxTimeStamp, sortBy, sortOrder } =
-        ctx.query;
+    const { userIds, status, minTimestamp, maxTimeStamp, sortBy, sortOrder } =
+      ctx.query;
 
-      const filters: Record<string, any> = {};
+    const filters: Record<string, any> = {};
 
-      if (userIds !== undefined)
-        filters.userIds = Array.isArray(userIds) ? userIds : [userIds];
+    if (userIds !== undefined)
+      filters.userIds = Array.isArray(userIds) ? userIds : [userIds];
 
-      if (status !== undefined) filters.status = status;
-      if (minTimestamp !== undefined) filters.minTimestamp = minTimestamp;
-      if (maxTimeStamp !== undefined) filters.maxTimeStamp = maxTimeStamp;
-      console.log(filters.userIds);
-      console.log(filters.status);
+    if (status !== undefined) filters.status = status;
+    if (minTimestamp !== undefined) filters.minTimestamp = minTimestamp;
+    if (maxTimeStamp !== undefined) filters.maxTimeStamp = maxTimeStamp;
 
-      const sorting: Record<string, any> = {};
+    const sorting: Record<string, any> = {};
 
-      if (sortBy !== undefined) sorting.sortBy = sortBy;
-      if (sortOrder !== undefined) sorting.sortOrder = sortOrder;
+    if (sortBy !== undefined) sorting.sortBy = sortBy;
+    if (sortOrder !== undefined) sorting.sortOrder = sortOrder;
 
-      const events = await this.eventService.getAllEvents(filters, sorting);
-      ctx.status = 200;
-      ctx.body = events;
-    } catch (e: unknown) {
-      if (e instanceof ZodError) {
-        ctx.status = 400;
-        ctx.body = {
-          error: "Validation error",
-          details: e.errors,
-        };
-      } else {
-        const error = e as HttpError;
-        ctx.status = error.status ?? 500;
-        ctx.body = { error: error.message || "Internal server error" };
-      }
-    }
+    const events = await this.eventService.getAllEvents(filters, sorting);
+    ctx.status = 200;
+    ctx.body = events;
   }
 
   private async updateEvent(ctx: Context): Promise<void> {
-    try {
-      const user: User = ctx.state.user as User;
-      if (!user) {
-        ctx.throw(401, "Unauthorized");
-      }
+    const eventId = ctx.params.id;
+    const updateEventRequest = ctx.request.body as UpdateEventRequest;
 
-      const eventId = ctx.params.id;
-      const updateEventRequest = ctx.request.body as UpdateEventRequest;
-
-      const errors = await validate(updateEventRequest);
-      if (errors.length > 0) {
-        ctx.status = 400;
-        ctx.body = { message: "Validation failed", errors };
-        return;
-      }
-
-      const updatedEvent = await this.eventService.updateEvent(
-        eventId,
-        updateEventRequest,
-      );
-
-      if (!updatedEvent) {
-        ctx.throw(404, "Event not found");
-      }
-
-      ctx.status = 200;
-      ctx.body = updatedEvent;
-    } catch (e: unknown) {
-      if (e instanceof ZodError) {
-        ctx.status = 400;
-        ctx.body = {
-          error: "Validation error",
-          details: e.errors,
-        };
-      } else {
-        const error = e as HttpError;
-        ctx.status = error.status ?? 500;
-        ctx.body = { error: error.message || "Internal server error" };
-      }
+    const errors = await validate(updateEventRequest);
+    if (errors.length > 0) {
+      ctx.status = 400;
+      ctx.body = { message: "Validation failed", errors };
+      return;
     }
+
+    const updatedEvent = await this.eventService.updateEvent(
+      eventId,
+      updateEventRequest,
+    );
+
+    if (!updatedEvent) {
+      ctx.throw(404, "Event not found");
+    }
+
+    ctx.status = 200;
+    ctx.body = updatedEvent;
   }
 }
