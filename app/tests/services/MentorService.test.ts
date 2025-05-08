@@ -185,7 +185,7 @@ describe("MentorService", () => {
   it("should throw if mentor is not found", async () => {
     mockRepo.findMentorProfileById.mockResolvedValue(null);
 
-    await expect(service.getOneMentor("not-found")).rejects.toThrow("Mentor not found");
+    await expect(service.getMentorById("not-found")).rejects.toThrow("Mentor not found");
   });
 
   it("should delete mentor request by id", async () => {
@@ -251,7 +251,7 @@ describe("MentorService", () => {
     mentor.mentor = user;
     mockRepo.findMentorProfileById.mockResolvedValue(mentor);
 
-    const result = await service.getOneMentor("mentor-uuid");
+    const result = await service.getMentorById("mentor-uuid");
 
     expect(mockRepo.findMentorProfileById).toHaveBeenCalledWith("mentor-uuid");
     expect(result.uuid).toBe("mentor-uuid");

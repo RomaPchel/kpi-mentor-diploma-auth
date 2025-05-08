@@ -8,6 +8,7 @@ import type {
 } from "../interfaces/EventInterfaces.js";
 import { EventRepository } from "../repositories/EventRepository.js";
 import { UserRepository } from "../repositories/UserRepository.js";
+import { HttpError } from "../errors/HttpError.js";
 
 export class EventService {
   private readonly repo: EventRepository;
@@ -28,7 +29,7 @@ export class EventService {
 
     const users = await this.userRepository.getAllUsersByIds(participants);
     if (users.length == 0) {
-      throw new Error("USERS_NOT_FOUND")
+      throw new HttpError("USERS_DOES_NOT_EXIST", 404)
     }
     event.participants.set(users);
     event.timestamp = new Date(Number(timestamp));
@@ -41,7 +42,7 @@ export class EventService {
   async getEventById(eventId: string) {
     const event = await this.repo.findById(eventId);
     if (!event) {
-      throw new Error("Event not found");
+      throw new HttpError("EVENT_DOES_NOT_EXIST", 404)
     }
     return this.toEventResponse(event);
   }
@@ -111,7 +112,7 @@ export class EventService {
   async updateEvent(eventId: string, updateData: Partial<UpdateEventRequest>) {
     const event = await this.repo.findById(eventId);
     if (!event) {
-      throw new Error("Event not found");
+      throw new HttpError("EVENT_DOES_NOT_EXIST", 404);
     }
 
     if (updateData.url) event.url = updateData.url;

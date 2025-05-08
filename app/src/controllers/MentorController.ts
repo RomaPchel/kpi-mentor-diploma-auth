@@ -84,11 +84,6 @@ export class MentorController extends Router {
   }
 
   private async getAllRequests(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user as User;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
-
     ctx.body = await this.mentorService.getAllRequests();
     ctx.status = 200;
   }
@@ -103,11 +98,6 @@ export class MentorController extends Router {
   }
 
   private async updateRequest(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user as User;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
-
     const id = ctx.params.id;
 
     const request = ctx.request.body as UpdateMentorRequest;
@@ -117,11 +107,6 @@ export class MentorController extends Router {
   }
 
   private async deleteRequest(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user as User;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
-
     const id = ctx.params.id;
 
     await this.mentorService.deleteById(id);
@@ -131,7 +116,7 @@ export class MentorController extends Router {
   private async getAllMentorStudentsByUser(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
 
-    ctx.body = await this.mentorService.getMentorsByUser(user);
+    ctx.body = await this.mentorService.getAllMentorsByUser(user);
     ctx.status = 200;
   }
 
@@ -163,20 +148,15 @@ export class MentorController extends Router {
   }
 
   private async getOneMentor(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
     const uuid = ctx.params.id;
-    ctx.body = await this.mentorService.getOneMentor(uuid);
+
+    ctx.body = await this.mentorService.getMentorById(uuid);
     ctx.status = 200;
   }
 
   private async rateMentor(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
+
     const uuid = ctx.params.id;
     const rateRequest = ctx.request.body as RateMentorRequest;
 

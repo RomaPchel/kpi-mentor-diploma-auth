@@ -77,11 +77,11 @@ export class AuthenticationUtil {
     });
 
     if (!existingUser) {
-      throw new Error(`User does not exist with email ${body.email}`);
+      throw new HttpError("USER_DOES_NOT_EXIST", 404);
     }
 
     if (!(await this.comparePasswords(body.password, existingUser.password))) {
-      throw new Error(`Passwords don't match for user ${body.email}`);
+      throw new HttpError("PASSWORDS_DO_NOT_MATCH", 400);
     }
 
     return this.buildTokens(existingUser as User);

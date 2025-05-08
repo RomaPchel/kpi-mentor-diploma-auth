@@ -10,6 +10,7 @@ import type {
 } from "../interfaces/MenteeInterfaces.js";
 import { MentorRepository } from "../repositories/MentorRepository.js";
 import { MentorStudent } from "../entities/StudentMentor.js";
+import { HttpError } from "../errors/HttpError.js";
 
 export class MenteeService {
   private readonly repo: MenteeRepository;
@@ -94,9 +95,7 @@ export class MenteeService {
     );
 
     if (req) {
-      throw new Error(
-        "You have already requested to become a mentee for this mentor.",
-      );
+      throw new HttpError("REQUEST_ALREADY_EXISTS", 400);
     }
 
     const requestEntity = new BecomeMenteeRequest();
