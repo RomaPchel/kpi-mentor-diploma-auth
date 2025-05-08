@@ -127,7 +127,6 @@ export class MentorService {
         $lte: filters.maxReviews,
       };
     }
-
     const mentors = await this.repo.findAllMentorProfiles(where);
 
     let result = mentors.map((mentorProfile) =>

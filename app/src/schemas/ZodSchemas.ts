@@ -3,17 +3,17 @@ import { EventStatus } from "../enums/EventEnums.js";
 import { FormsOfEducation, MentorRequestStatus } from "../enums/UserEnums.js";
 
 export const RegistrationRequestSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
+  email: z.string().email({ message: "EMAIL_MUST_BE_VALID" }),
   password: z
     .string()
-    .min(8, { message: "Password must be at least 8 characters long" }),
+    .min(8, { message: "PASSWORD_MUST_BE_AT_LEAST_8_CHARACTERS_LONG" }),
 });
 
 export const LoginRequestSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
+  email: z.string().email({ message: "EMAIL_MUST_BE_VALID" }),
   password: z
     .string()
-    .min(8, { message: "Password must be at least 8 characters long" }),
+    .min(8, { message: "PASSWORD_MUST_BE_AT_LEAST_8_CHARACTERS_LONG" }),
 });
 
 export const CreateEventSchema = z.object({

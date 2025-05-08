@@ -24,7 +24,7 @@ export class AuthenticationUtil {
     });
 
     if (existingUser) {
-      throw new HttpError("User already exists", 400);
+      throw new HttpError("USER_ALREADY_EXISTS", 400);
     }
 
     const newUser: User = new User();

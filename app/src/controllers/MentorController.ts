@@ -136,11 +136,6 @@ export class MentorController extends Router {
   }
 
   private async getAllMentors(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
-
     const {
       name,
       minRating,
@@ -150,7 +145,6 @@ export class MentorController extends Router {
       sortBy,
       sortOrder,
     } = ctx.query;
-
     const filters: Record<string, any> = {};
 
     if (name !== undefined) filters.name = name;

@@ -17,6 +17,8 @@ import { MenteeController } from "./controllers/MenteeController.js";
 const app = new Koa();
 const server: HTTPServer = createServer(app.callback());
 
+await orm.getSchemaGenerator().updateSchema();
+
 app.use(
   cors({
     origin: (ctx) => {
@@ -32,8 +34,8 @@ app.use(
 );
 
 app.use(koabodyparser());
-app.use(ErrorMiddleware());
 app.use(ValidationMiddleware());
+app.use(ErrorMiddleware());
 
 await orm.connect().then(() => {
   console.log("Database has connected!");

@@ -7,8 +7,6 @@ import type {
 import { AuthenticationUtil } from "../Utils/AuthenticationUtil.js";
 import type { User } from "../entities/User.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
-import { ZodError } from "zod";
-import { HttpError } from "../errors/HttpError.js";
 
 export class AuthController extends Router {
   constructor() {
@@ -36,37 +34,18 @@ export class AuthController extends Router {
   }
 
   private async refresh(ctx: Context) {
-    console.log("Refreshing user...");
-    try {
-      const { refreshToken } = ctx.params;
+    const { refreshToken } = ctx.params;
 
-      const token: string | false | null =
-        await AuthenticationUtil.verifyRefreshToken(refreshToken);
-      ctx.body = { accessToken: token };
-      ctx.status = 200;
-    } catch (e) {
-      console.error(e);
-    }
+    const token: string | false | null =
+      await AuthenticationUtil.verifyRefreshToken(refreshToken);
+    ctx.body = { accessToken: token };
+    ctx.status = 200;
   }
 
   private async registration(ctx: Context) {
-    try {
     const body: RegistrationRequestBody = ctx.request
       .body as RegistrationRequestBody;
     ctx.body = await AuthenticationUtil.register(body);
     ctx.status = 201;
-    } catch (e) {
-      if (e instanceof ZodError) {
-        ctx.status = 400;
-        ctx.body = {
-          error: "Validation error",
-          details: e.errors,
-        };
-      } else {
-        const error = e as HttpError;
-        ctx.status = error.status || 500;
-        ctx.body = { error: error.message || "Internal server error" };
-      }
-    }
   }
 }

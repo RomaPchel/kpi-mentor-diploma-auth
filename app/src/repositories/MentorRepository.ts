@@ -50,7 +50,7 @@ export class MentorRepository {
   }
 
   async findAllMentorProfiles(where: any) {
-    return em.find(MentorProfile, where, { populate: ["mentor"] });
+    return await em.find(MentorProfile, where, { populate: ["mentor", "reviews.reviewer"] });
   }
 
   async findMentorProfileById(uuid: string) {
