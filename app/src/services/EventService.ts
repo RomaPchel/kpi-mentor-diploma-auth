@@ -1,19 +1,22 @@
 import { Event } from "../entities/Event.js";
 import { User } from "../entities/User.js";
 import { EventStatus } from "../enums/EventEnums.js";
-import { em } from "../db/config.js";
 import type {
   CreateEventRequest,
   EventResponse,
   UpdateEventRequest,
 } from "../interfaces/EventInterfaces.js";
 import { EventRepository } from "../repositories/EventRepository.js";
+import { UserRepository } from "../repositories/UserRepository.js";
+import { HttpError } from "../errors/HttpError.js";
 
 export class EventService {
-  private readonly eventRepository: EventRepository;
+  private readonly repo: EventRepository;
+  private readonly userRepository = new UserRepository();
 
   constructor() {
-    this.eventRepository = new EventRepository();
+    this.repo = new EventRepository();
+    this.userRepository = new UserRepository();
   }
 
   async createEvent(req: CreateEventRequest, owner: User) {
@@ -24,49 +27,114 @@ export class EventService {
     event.owner = owner;
     event.status = EventStatus.PLANNED;
 
-    const users = await em.find(User, { uuid: { $in: participants || [] } });
+    const users = await this.userRepository.getAllUsersByIds(participants);
+
     event.participants.set(users);
+    event.timestamp = new Date(Number(timestamp));
 
-    event.timestamp = new Date(timestamp);
-
-    await this.eventRepository.save(event);
+    await this.repo.save(event);
 
     return this.toEventResponse(event);
   }
 
   async getEventById(eventId: string) {
-    const event = await this.eventRepository.findById(eventId);
+    const event = await this.repo.findById(eventId);
     if (!event) {
-      throw new Error("Event not found");
+      throw new HttpError("EVENT_DOES_NOT_EXIST", 404)
     }
     return this.toEventResponse(event);
   }
 
-  async getAllEvents() {
-    const events = await this.eventRepository.findAll();
-    return events.map((event) => {
-      return this.toEventResponse(event);
+  async getAllEvents(
+    filters: {
+      users?: string[];
+      owner?: string;
+      status?: EventStatus;
+      minTimestamp?: string;
+      maxTimeStamp?: string;
+    },
+    sorting: {
+      sortBy?: "status" | "timestamp";
+      sortOrder?: "asc" | "desc";
+    },
+  ) {
+    const where: any = {};
+
+    if (filters?.status) {
+      where.status = filters.status;
+    }
+
+    if (filters?.owner) {
+      where.owner = { uuid: filters.owner };
+    }
+
+    if (filters?.minTimestamp) {
+      where.timestamp = {
+        ...(where.timestamp || {}),
+        $gte: new Date(filters.minTimestamp),
+      };
+    }
+
+    if (filters?.maxTimeStamp) {
+      where.timestamp = {
+        ...(where.timestamp || {}),
+        $lte: new Date(filters.maxTimeStamp),
+      };
+    }
+    if (filters?.users?.length) {
+      const usersArray = JSON.parse(filters.users);
+      where.$or = [
+        { participants: { uuid: { $in: usersArray } } },
+      ];
+    }
+    const events = await this.repo.findAll(where);
+
+    let result = events.map((event) => this.toEventResponse(event));
+
+    const sortBy = sorting.sortBy ?? "createdAt";
+    const sortOrder = sorting.sortOrder !== "asc" ? -1 : 1;
+
+    result = result.sort((a, b) => {
+      let aValue, bValue;
+
+      if (sortBy === "status") {
+        aValue = a.status.toLowerCase() ?? "";
+        bValue = b.status.toLowerCase() ?? "";
+      } else if (sortBy === "timestamp") {
+        aValue = new Date(a.timestamp).getTime();
+        bValue = new Date(b.timestamp).getTime();
+      } else {
+        aValue = new Date(a.createdAt).getTime();
+        bValue = new Date(b.createdAt).getTime();
+      }
+
+      if (aValue < bValue) return -1 * sortOrder;
+      if (aValue > bValue) return 1 * sortOrder;
+      return 0;
     });
+
+
+    return result;
   }
 
   async updateEvent(eventId: string, updateData: Partial<UpdateEventRequest>) {
-    const event = await this.eventRepository.findById(eventId);
+    const event = await this.repo.findById(eventId);
     if (!event) {
-      throw new Error("Event not found");
+      throw new HttpError("EVENT_DOES_NOT_EXIST", 404);
     }
 
     if (updateData.url) event.url = updateData.url;
     if (updateData.status) event.status = updateData.status;
-    if (updateData.timestamp) event.timestamp = new Date(updateData.timestamp);
+    if (updateData.timestamp) event.timestamp = new Date(Number(updateData.timestamp));
 
     if (updateData.participants) {
-      const participantUsers = await em.find(User, {
-        uuid: { $in: updateData.participants },
-      });
+      const participantUsers = await this.userRepository.getAllUsersByIds(
+        updateData.participants,
+      );
       event.participants.set(participantUsers);
     }
 
-    await this.eventRepository.save(event);
+    await this.repo.save(event);
 
     return this.toEventResponse(event);
   }
@@ -85,6 +153,7 @@ export class EventService {
         id: user.uuid,
         name: `${user.firstName} ${user.lastName}`,
       })),
+      createdAt: event.createdAt
     };
   }
 }

@@ -2,14 +2,15 @@ import Router from "koa-router";
 import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { UserRole } from "../enums/UserEnums.js";
-import type {
-  CreateMentorRequest,
-  RateMentorRequest,
-  UpdateMentorRequest,
-} from "../interfaces/UserInterface.js";
+
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
 import { MentorService } from "../services/MentorService.js";
+import {
+  CreateMentorRequest,
+  RateMentorRequest,
+  UpdateMentorRequest,
+} from "../interfaces/MentorInterfaces.js";
 
 export class MentorController extends Router {
   private readonly mentorService: MentorService;
@@ -36,29 +37,35 @@ export class MentorController extends Router {
       AuthMiddleware(),
       this.getOwnBecomeMentorRequest.bind(this),
     );
+
     this.get(
       "/become-mentor-request/all",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
       this.getAllBecomeMentorRequests.bind(this),
     );
+
     this.get(
       "/become-mentor-request/:id",
       AuthMiddleware(),
       this.getBecomeMentorRequestById.bind(this),
     );
+
     this.put(
       "/become-mentor-request/:id",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
       this.updateBecomeMentorRequest.bind(this),
     );
+
     this.delete(
       "/become-mentor-request/:id",
       AuthMiddleware(),
       roleMiddleware(UserRole.ADMIN),
       this.deleteBecomeMentorRequest.bind(this),
     );
+
+    this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
     this.get("/profile/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
     this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
     this.put("/rate/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
@@ -69,8 +76,7 @@ export class MentorController extends Router {
 
     const motivation = ctx.request.body as CreateMentorRequest;
 
-    const existingRequest =
-      await this.mentorService.getOwnBecomeMentorRequest(user);
+    const existingRequest = await this.mentorService.getOneRequestByUser(user);
     if (existingRequest) {
       ctx.throw(400, "You already have a pending request.");
     }
@@ -107,7 +113,7 @@ export class MentorController extends Router {
   private async getOwnBecomeMentorRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
-    ctx.body = await this.mentorService.getOwnBecomeMentorRequest(user);
+    ctx.body = await this.mentorService.getOneRequestByUser(user);
     ctx.status = 200;
   }
 
@@ -117,7 +123,7 @@ export class MentorController extends Router {
       ctx.throw(401, "Unauthorized");
     }
 
-    ctx.body = await this.mentorService.getAllBecomeMentorRequests();
+    ctx.body = await this.mentorService.getAllRequests();
     ctx.status = 200;
   }
 
@@ -126,18 +132,16 @@ export class MentorController extends Router {
 
     const id = ctx.params.id;
 
-    ctx.body = await this.mentorService.getBecomeMentorRequestById(user, id);
+    ctx.body = await this.mentorService.getOneRequestById(user, id);
     ctx.status = 200;
   }
 
   private async updateBecomeMentorRequest(ctx: Context): Promise<void> {
-    console.log("ADSDASDASDAS");
-
     const id = ctx.params.id;
 
     const request = ctx.request.body as UpdateMentorRequest;
 
-    ctx.body = await this.mentorService.updateBecomeMentorRequest(id, request);
+    ctx.body = await this.mentorService.updateRequest(id, request);
     ctx.status = 200;
   }
 
@@ -174,7 +178,6 @@ export class MentorController extends Router {
     const user: User = ctx.state.user;
 
     const uuid = ctx.params.uuid;
-    console.log(uuid);
     const rateRequest = ctx.request.body as RateMentorRequest;
 
     await this.mentorService.rateMentor(uuid, user, rateRequest);

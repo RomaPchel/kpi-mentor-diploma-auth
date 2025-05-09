@@ -18,6 +18,7 @@ export interface EventResponse {
   url: string;
   status: EventStatus;
   timestamp: Date;
+  createdAt: Date;
   owner: {
     id: string;
     name: string;

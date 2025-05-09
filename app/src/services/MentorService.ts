@@ -2,6 +2,8 @@ import { User } from "../entities/User.js";
 import { MentorProfile } from "../entities/MentorProfile.js";
 import { em } from "../db/config.js";
 import { MentorRequestStatus, UserRole } from "../enums/UserEnums.js";
+import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
+import { MentorRepository } from "../repositories/MentorRepository.js";
 import type {
   BecomeMentorRequestResponse,
   CreateMentorRequest,
@@ -9,13 +11,14 @@ import type {
   RateMentorRequest,
   UpdateMentorRequest,
 } from "../interfaces/UserInterface.js";
-import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { Review } from "../entities/MentorReview.js";
 import { MentorStudent } from "../entities/StudentMentor.js";
 import { UserChat } from "../entities/chat/UserChat.js";
 import { Feedback } from "../entities/Feedback.js";
 
 export class MentorService {
+  private readonly repo = new MentorRepository();
+
   async createBecomeMentorRequest(user: User, req: CreateMentorRequest) {
     const existingRequest = await em.findOne(BecomeMentorRequest, {
       user: user.uuid,
@@ -31,6 +34,29 @@ export class MentorService {
 
     await em.persistAndFlush(request);
 
+    return this.toMentorRequestResponse(request);
+  }
+
+  async getOneRequestByUser(user: User) {
+    const request = await this.repo.findRequestByUser(user.uuid);
+    return request ? this.toMentorRequestResponse(request) : null;
+  }
+
+  async getAllRequests() {
+    const requests = await em.find(
+      BecomeMentorRequest,
+      { status: MentorRequestStatus.PENDING },
+      { populate: ["user"] },
+    );
+    return requests.map(this.toMentorRequestResponse);
+  }
+
+  async getOneRequestById(user: User, id: string) {
+    const request = await this.repo.findRequestById(id);
+    if (!request) throw new Error("Mentor request not found.");
+    if (user.role !== UserRole.ADMIN && request.user.uuid !== user.uuid) {
+      throw new Error("Forbidden");
+    }
     return this.toMentorRequestResponse(request);
   }
 
@@ -65,38 +91,7 @@ export class MentorService {
     return feedback;
   }
 
-  async getOwnBecomeMentorRequest(user: User) {
-    const request = await em.findOne(
-      BecomeMentorRequest,
-      { user: user.uuid },
-      { populate: ["user"] },
-    );
-    return request ? this.toMentorRequestResponse(request) : null;
-  }
-
-  async getAllBecomeMentorRequests() {
-    const requests = await em.find(
-      BecomeMentorRequest,
-      { status: MentorRequestStatus.PENDING },
-      { populate: ["user"] },
-    );
-    return requests.map(this.toMentorRequestResponse);
-  }
-
-  async getBecomeMentorRequestById(user: User, id: string) {
-    const request = await em.findOne(
-      BecomeMentorRequest,
-      { uuid: id },
-      { populate: ["user"] },
-    );
-    if (!request) throw new Error("Mentor request not found.");
-    if (user.role !== UserRole.ADMIN && request.user.uuid !== user.uuid) {
-      throw new Error("Forbidden");
-    }
-    return this.toMentorRequestResponse(request);
-  }
-
-  async updateBecomeMentorRequest(id: string, data: UpdateMentorRequest) {
+  async updateRequest(id: string, data: UpdateMentorRequest) {
     const request = await em.findOne(
       BecomeMentorRequest,
       { uuid: id },
@@ -119,7 +114,6 @@ export class MentorService {
         await em.persist(mentorProfile);
       }
 
-      // Set user role to MENTOR
       request.user.role = UserRole.MENTOR;
     }
 
@@ -154,15 +148,9 @@ export class MentorService {
   }
 
   async deleteById(id: string) {
-    const request = await em.findOne(
-      BecomeMentorRequest,
-      { uuid: id },
-      { populate: ["user"] },
-    );
-    if (!request) {
-      throw Error("Mentor request not found.");
-    }
-    await em.removeAndFlush(request);
+    const request = await this.repo.findRequestById(id);
+    if (!request) throw new Error("Mentor request not found.");
+    await this.repo.removeRequest(request);
   }
 
   private toMentorRequestResponse(
@@ -209,7 +197,7 @@ export class MentorService {
       email: profile.mentor.email,
       interests: profile.mentor.interests,
       name: `${profile.mentor.firstName} ${profile.mentor.lastName}`,
-      specialization: profile.mentor.specializationTitle,
+      specialization: profile.mentor.specialization,
       bio: profile.mentor.bio,
       department: profile.mentor.department,
       rating: profile.rating,
@@ -266,6 +254,7 @@ export class MentorService {
         review.friendliness = rateRequest.friendliness;
         review.knowledge = rateRequest.knowledge;
         review.communication = rateRequest.communication;
+        // @ts-ignore
         review.comment = rateRequest.comment ?? null;
       } else {
         review = em.create(Review, {

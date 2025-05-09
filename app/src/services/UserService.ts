@@ -1,32 +1,31 @@
 import { User } from "../entities/User.js";
-import { em } from "../db/config.js";
-import type {
-  UserProfileResponse,
-  UserProfileUpdateRequest,
+import { UserRepository } from "../repositories/UserRepository.js";
+import {
+  UserResponse,
+  UserUpdateRequest,
 } from "../interfaces/UserInterface.js";
 
 export class UserService {
-  async updateUserProfile(user: User, data: UserProfileUpdateRequest) {
+  private readonly repo = new UserRepository();
+
+  async updateUser(user: User, data: UserUpdateRequest) {
     user.firstName = data.firstName ?? user.firstName;
     user.lastName = data.lastName ?? user.lastName;
     user.email = data.email ?? user.email;
     user.avatar = data.avatar ?? user.avatar;
     user.bio = data.bio ?? user.bio;
-    user.specializationCode =
-      data.specializationCode ?? user.specializationCode;
-    user.specializationTitle =
-      data.specializationTitle ?? user.specializationTitle;
+    user.specialization = data.specialization ?? user.specialization;
     user.formOfEducation = data.formOfEducation ?? user.formOfEducation;
     user.groupCode = data.groupCode ?? user.groupCode;
     user.department = data.department ?? user.department;
     user.interests = data.interests ?? user.interests;
 
-    await em.persistAndFlush(user);
+    await this.repo.save(user);
 
     return this.toUserProfileResponse(user);
   }
 
-  private toUserProfileResponse(user: User): UserProfileResponse {
+  private toUserProfileResponse(user: User): UserResponse {
     return {
       id: user.uuid,
       firstName: user.firstName,
@@ -34,12 +33,16 @@ export class UserService {
       email: user.email,
       avatar: user.avatar,
       bio: user.bio,
-      specializationCode: user.specializationCode,
-      specializationTitle: user.specializationTitle,
+      specialization: user.specialization,
       formOfEducation: user.formOfEducation ?? null,
       groupCode: user.groupCode,
       department: user.department,
       interests: user.interests ?? [],
     };
+  }
+
+  async getAllUsers() {
+    const users = await this.repo.findAll();
+    return users.map(this.toUserProfileResponse);
   }
 }
