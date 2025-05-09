@@ -9,6 +9,7 @@ import { em } from "../db/config.js";
 import { compare } from "bcrypt";
 import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
 import { FormsOfEducation, TokenExpiration } from "../enums/UserEnums.js";
+import { HttpError } from "../errors/HttpError.js";
 
 export class AuthenticationUtil {
   public static readonly ACCESS_SECRET = process.env
@@ -23,7 +24,7 @@ export class AuthenticationUtil {
     });
 
     if (existingUser) {
-      throw new Error("User already exists");
+      throw new HttpError("USER_ALREADY_EXISTS", 400);
     }
 
     const newUser: User = new User();
@@ -32,8 +33,7 @@ export class AuthenticationUtil {
     newUser.lastName = body.lastName;
     newUser.email = body.email;
     newUser.password = body.password; //hashed before creating via @BeforeCreate
-    newUser.specializationCode = body.specializationCode;
-    newUser.specializationTitle = body.specializationTitle;
+    newUser.specialization = body.specialization;
     newUser.formOfEducation = FormsOfEducation.FULL_TIME;
     newUser.groupCode = body.groupCode;
     newUser.department = body.department;
@@ -77,11 +77,11 @@ export class AuthenticationUtil {
     });
 
     if (!existingUser) {
-      throw new Error(`User does not exist with email ${body.email}`);
+      throw new HttpError("USER_DOES_NOT_EXIST", 404);
     }
 
     if (!(await this.comparePasswords(body.password, existingUser.password))) {
-      throw new Error(`Passwords don't match for user ${body.email}`);
+      throw new HttpError("PASSWORDS_DO_NOT_MATCH", 400);
     }
 
     return this.buildTokens(existingUser as User);

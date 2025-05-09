@@ -48,14 +48,14 @@ describe("MentorRepository", () => {
   });
 
   it("should create a become mentor request", async () => {
-    await repo.saveBecomeMentorRequest(mockRequest);
+    await repo.saveRequest(mockRequest);
     expect(em.persistAndFlush).toHaveBeenCalledWith(mockRequest);
   });
 
   it("should fetch own mentor request by user", async () => {
     (em.findOne as jest.Mock).mockResolvedValue(mockRequest);
 
-    const result = await repo.findBecomeMentorRequestByUser(mockUser.uuid);
+    const result = await repo.findRequestByUser(mockUser.uuid);
 
     expect(em.findOne).toHaveBeenCalledWith(BecomeMentorRequest, {
       user: mockUser.uuid,
@@ -67,7 +67,7 @@ describe("MentorRepository", () => {
   it("should fetch a mentor request by ID", async () => {
     (em.findOne as jest.Mock).mockResolvedValue(mockRequest);
 
-    const result = await repo.findBecomeMentorRequestById(mockRequest.uuid);
+    const result = await repo.findRequestById(mockRequest.uuid);
     expect(em.findOne).toHaveBeenCalledWith(
       BecomeMentorRequest,
       { uuid: mockRequest.uuid },
@@ -89,7 +89,7 @@ describe("MentorRepository", () => {
 
     (em.find as jest.Mock).mockResolvedValue([request1, request2]);
 
-    const result = await repo.findAllBecomeMentorRequests();
+    const result = await repo.findAllRequests();
 
     expect(em.find).toHaveBeenCalledWith(BecomeMentorRequest, {}, { populate: ["user"] });
 
@@ -99,7 +99,7 @@ describe("MentorRepository", () => {
   it("should delete a mentor request by ID", async () => {
     (em.findOne as jest.Mock).mockResolvedValue(mockRequest);
 
-    await repo.removeBecomeMentorRequest(mockRequest);
+    await repo.removeRequest(mockRequest);
 
     expect(em.removeAndFlush).toHaveBeenCalledWith(mockRequest);
   });

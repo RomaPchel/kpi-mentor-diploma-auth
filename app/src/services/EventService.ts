@@ -8,6 +8,7 @@ import type {
 } from "../interfaces/EventInterfaces.js";
 import { EventRepository } from "../repositories/EventRepository.js";
 import { UserRepository } from "../repositories/UserRepository.js";
+import { HttpError } from "../errors/HttpError.js";
 
 export class EventService {
   private readonly repo: EventRepository;
@@ -27,9 +28,9 @@ export class EventService {
     event.status = EventStatus.PLANNED;
 
     const users = await this.userRepository.getAllUsersByIds(participants);
-    event.participants.set(users);
 
-    event.timestamp = new Date(timestamp);
+    event.participants.set(users);
+    event.timestamp = new Date(Number(timestamp));
 
     await this.repo.save(event);
 
@@ -39,20 +40,21 @@ export class EventService {
   async getEventById(eventId: string) {
     const event = await this.repo.findById(eventId);
     if (!event) {
-      throw new Error("Event not found");
+      throw new HttpError("EVENT_DOES_NOT_EXIST", 404)
     }
     return this.toEventResponse(event);
   }
 
   async getAllEvents(
     filters: {
-      userIds?: string[];
+      users?: string[];
+      owner?: string;
       status?: EventStatus;
       minTimestamp?: string;
       maxTimeStamp?: string;
     },
     sorting: {
-      sortBy?: "status";
+      sortBy?: "status" | "timestamp";
       sortOrder?: "asc" | "desc";
     },
   ) {
@@ -60,6 +62,10 @@ export class EventService {
 
     if (filters?.status) {
       where.status = filters.status;
+    }
+
+    if (filters?.owner) {
+      where.owner = { uuid: filters.owner };
     }
 
     if (filters?.minTimestamp) {
@@ -75,19 +81,18 @@ export class EventService {
         $lte: new Date(filters.maxTimeStamp),
       };
     }
-
-    if (filters?.userIds?.length) {
+    if (filters?.users?.length) {
+      const usersArray = JSON.parse(filters.users);
       where.$or = [
-        { owner: { id: { $in: filters.userIds } } },
-        { participants: { id: { $in: filters.userIds } } },
+        { participants: { uuid: { $in: usersArray } } },
       ];
     }
     const events = await this.repo.findAll(where);
 
     let result = events.map((event) => this.toEventResponse(event));
 
-    const sortBy = sorting.sortBy ?? "timestamp";
-    const sortOrder = sorting.sortOrder === "desc" ? -1 : 1;
+    const sortBy = sorting.sortBy ?? "createdAt";
+    const sortOrder = sorting.sortOrder !== "asc" ? -1 : 1;
 
     result = result.sort((a, b) => {
       let aValue, bValue;
@@ -95,12 +100,19 @@ export class EventService {
       if (sortBy === "status") {
         aValue = a.status.toLowerCase() ?? "";
         bValue = b.status.toLowerCase() ?? "";
+      } else if (sortBy === "timestamp") {
+        aValue = new Date(a.timestamp).getTime();
+        bValue = new Date(b.timestamp).getTime();
+      } else {
+        aValue = new Date(a.createdAt).getTime();
+        bValue = new Date(b.createdAt).getTime();
       }
 
-      if (aValue! < bValue!) return -1 * sortOrder;
-      if (aValue! > bValue!) return 1 * sortOrder;
+      if (aValue < bValue) return -1 * sortOrder;
+      if (aValue > bValue) return 1 * sortOrder;
       return 0;
     });
+
 
     return result;
   }
@@ -108,12 +120,12 @@ export class EventService {
   async updateEvent(eventId: string, updateData: Partial<UpdateEventRequest>) {
     const event = await this.repo.findById(eventId);
     if (!event) {
-      throw new Error("Event not found");
+      throw new HttpError("EVENT_DOES_NOT_EXIST", 404);
     }
 
     if (updateData.url) event.url = updateData.url;
     if (updateData.status) event.status = updateData.status;
-    if (updateData.timestamp) event.timestamp = new Date(updateData.timestamp);
+    if (updateData.timestamp) event.timestamp = new Date(Number(updateData.timestamp));
 
     if (updateData.participants) {
       const participantUsers = await this.userRepository.getAllUsersByIds(
@@ -141,6 +153,7 @@ export class EventService {
         id: user.uuid,
         name: `${user.firstName} ${user.lastName}`,
       })),
+      createdAt: event.createdAt
     };
   }
 }

@@ -43,14 +43,14 @@ describe("MentorService", () => {
     user.email = "gmail";
     const requestDto = { motivation: "I want to help" };
 
-    mockRepo.findBecomeMentorRequestByUser.mockResolvedValue(null);
+    mockRepo.findRequestByUser.mockResolvedValue(null);
 
-    const result = await service.createBecomeMentorRequest(user, requestDto);
+    const result = await service.createRequest(user, requestDto);
 
-    expect(mockRepo.findBecomeMentorRequestByUser).toHaveBeenCalledWith(
+    expect(mockRepo.findRequestByUser).toHaveBeenCalledWith(
       user.uuid,
     );
-    expect(mockRepo.saveBecomeMentorRequest).toHaveBeenCalledWith(
+    expect(mockRepo.saveRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         user,
         motivation: "I want to help",
@@ -76,10 +76,10 @@ describe("MentorService", () => {
     const existingRequest = new BecomeMentorRequest();
     existingRequest.uuid = "existing-request";
 
-    mockRepo.findBecomeMentorRequestByUser.mockResolvedValue(existingRequest);
+    mockRepo.findRequestByUser.mockResolvedValue(existingRequest);
 
     await expect(
-      service.createBecomeMentorRequest(user, { motivation: "Again" }),
+      service.createRequest(user, { motivation: "Again" }),
     ).rejects.toThrow("You already have a pending request.");
   });
 
@@ -91,7 +91,7 @@ describe("MentorService", () => {
     request.status = MentorRequestStatus.PENDING;
     request.uuid = "request-id";
 
-    mockRepo.findBecomeMentorRequestById.mockResolvedValue(request);
+    mockRepo.findRequestById.mockResolvedValue(request);
 
     const result = await service.updateRequest("request-id", {
       status: MentorRequestStatus.APPROVED,
@@ -106,7 +106,7 @@ describe("MentorService", () => {
       }),
     );
 
-    expect(mockRepo.saveBecomeMentorRequest).toHaveBeenCalledWith(
+    expect(mockRepo.saveRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         status: MentorRequestStatus.APPROVED,
         motivation: "Updated",
@@ -118,7 +118,7 @@ describe("MentorService", () => {
   });
 
   it("should throw if mentor request to update is not found", async () => {
-    mockRepo.findBecomeMentorRequestById.mockResolvedValue(null);
+    mockRepo.findRequestById.mockResolvedValue(null);
     await expect(
       service.updateRequest("bad-id", {
         status: MentorRequestStatus.APPROVED,
@@ -142,7 +142,7 @@ describe("MentorService", () => {
     request2.uuid = "request-2";
     request2.user = user;
 
-    mockRepo.findAllBecomeMentorRequests.mockResolvedValue([
+    mockRepo.findAllRequests.mockResolvedValue([
       request1,
       request2,
     ]);
@@ -161,7 +161,7 @@ describe("MentorService", () => {
     request.user = new User();
     request.user.uuid = "other-user";
 
-    mockRepo.findBecomeMentorRequestById.mockResolvedValue(request);
+    mockRepo.findRequestById.mockResolvedValue(request);
 
     const result = await service.getOneRequestById(user, "request-id");
     expect(result.id).toBe("request-id");
@@ -176,7 +176,7 @@ describe("MentorService", () => {
     request.uuid = "request-id";
     request.user = user;
 
-    mockRepo.findBecomeMentorRequestByUser.mockResolvedValue(request);
+    mockRepo.findRequestByUser.mockResolvedValue(request);
 
     const result = await service.getOneRequestByUser(user);
     expect(result).not.toBeNull();
@@ -185,22 +185,22 @@ describe("MentorService", () => {
   it("should throw if mentor is not found", async () => {
     mockRepo.findMentorProfileById.mockResolvedValue(null);
 
-    await expect(service.getOneMentor("not-found")).rejects.toThrow("Mentor not found");
+    await expect(service.getMentorById("not-found")).rejects.toThrow("Mentor not found");
   });
 
   it("should delete mentor request by id", async () => {
     const request = new BecomeMentorRequest();
     request.uuid = "request-id";
-    mockRepo.findBecomeMentorRequestById.mockResolvedValue(request);
+    mockRepo.findRequestById.mockResolvedValue(request);
 
     await service.deleteById("request-id");
 
-    expect(mockRepo.findBecomeMentorRequestById).toHaveBeenCalledWith("request-id");
-    expect(mockRepo.removeBecomeMentorRequest).toHaveBeenCalledWith(request);
+    expect(mockRepo.findRequestById).toHaveBeenCalledWith("request-id");
+    expect(mockRepo.removeRequest).toHaveBeenCalledWith(request);
   });
 
   it("should throw if mentor request is not found", async () => {
-    mockRepo.findBecomeMentorRequestById.mockResolvedValue(null);
+    mockRepo.findRequestById.mockResolvedValue(null);
 
     await expect(service.deleteById("invalid-id")).rejects.toThrow("Mentor request not found.");
   });
@@ -251,7 +251,7 @@ describe("MentorService", () => {
     mentor.mentor = user;
     mockRepo.findMentorProfileById.mockResolvedValue(mentor);
 
-    const result = await service.getOneMentor("mentor-uuid");
+    const result = await service.getMentorById("mentor-uuid");
 
     expect(mockRepo.findMentorProfileById).toHaveBeenCalledWith("mentor-uuid");
     expect(result.uuid).toBe("mentor-uuid");
@@ -267,7 +267,7 @@ describe("MentorService", () => {
     request.user = new User();
     request.user.uuid = "user-b";
 
-    mockRepo.findBecomeMentorRequestById.mockResolvedValue(request);
+    mockRepo.findRequestById.mockResolvedValue(request);
 
     await expect(service.getOneRequestById(user, "request-id")).rejects.toThrow(
       "Forbidden",

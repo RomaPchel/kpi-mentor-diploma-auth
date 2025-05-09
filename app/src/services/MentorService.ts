@@ -38,21 +38,21 @@ export class MentorService {
   }
 
   async getOneRequestByUser(user: User) {
-    const request = await this.repo.findBecomeMentorRequestByUser(user.uuid);
+    const request = await this.repo.findRequestByUser(user.uuid);
     return request ? this.toMentorRequestResponse(request) : null;
   }
 
-    async getAllRequests() {
-        const requests = await em.find(
-            BecomeMentorRequest,
-            { status: MentorRequestStatus.PENDING },
-            { populate: ["user"] },
-        );
-        return requests.map(this.toMentorRequestResponse);
-    }
+  async getAllRequests() {
+    const requests = await em.find(
+      BecomeMentorRequest,
+      { status: MentorRequestStatus.PENDING },
+      { populate: ["user"] },
+    );
+    return requests.map(this.toMentorRequestResponse);
+  }
 
   async getOneRequestById(user: User, id: string) {
-    const request = await this.repo.findBecomeMentorRequestById(id);
+    const request = await this.repo.findRequestById(id);
     if (!request) throw new Error("Mentor request not found.");
     if (user.role !== UserRole.ADMIN && request.user.uuid !== user.uuid) {
       throw new Error("Forbidden");
@@ -60,70 +60,70 @@ export class MentorService {
     return this.toMentorRequestResponse(request);
   }
 
-    async createFeedback(
-        user: User,
-        mentorUuid: string,
-        message: string,
-        anonymous: boolean,
-    ) {
-        const mentor = await em.findOneOrFail(MentorProfile, {
-            mentor: mentorUuid,
-        });
+  async createFeedback(
+    user: User,
+    mentorUuid: string,
+    message: string,
+    anonymous: boolean,
+  ) {
+    const mentor = await em.findOneOrFail(MentorProfile, {
+      mentor: mentorUuid,
+    });
 
-        const alreadyReported = await em.findOne(Feedback, {
-            mentor,
-            author: user,
-        });
+    const alreadyReported = await em.findOne(Feedback, {
+      mentor,
+      author: user,
+    });
 
-        if (alreadyReported) {
-            throw new Error("You have already submitted a report for this mentor.");
-        }
-
-        const feedback = em.create(Feedback, {
-            author: user,
-            mentor,
-            message,
-            anonymous,
-            reviewedByAdmin: false,
-        });
-
-        await em.persistAndFlush(feedback);
-        return feedback;
+    if (alreadyReported) {
+      throw new Error("You have already submitted a report for this mentor.");
     }
 
-    async updateRequest(id: string, data: UpdateMentorRequest) {
-        const request = await em.findOne(
-            BecomeMentorRequest,
-            { uuid: id },
-            { populate: ["user"] },
-        );
-        if (!request) throw new Error("Mentor request not found.");
+    const feedback = em.create(Feedback, {
+      author: user,
+      mentor,
+      message,
+      anonymous,
+      reviewedByAdmin: false,
+    });
 
-        if (data.status === MentorRequestStatus.APPROVED) {
-            // Check if mentor profile already exists
-            const existingProfile = await em.findOne(MentorProfile, {
-                mentor: request.user,
-            });
+    await em.persistAndFlush(feedback);
+    return feedback;
+  }
 
-            // Create new profile only if one doesn't already exist
-            if (!existingProfile) {
-                const mentorProfile = new MentorProfile();
-                mentorProfile.mentor = request.user;
-                mentorProfile.rating = 0;
-                mentorProfile.totalReviews = 0;
-                await em.persist(mentorProfile);
-            }
+  async updateRequest(id: string, data: UpdateMentorRequest) {
+    const request = await em.findOne(
+      BecomeMentorRequest,
+      { uuid: id },
+      { populate: ["user"] },
+    );
+    if (!request) throw new Error("Mentor request not found.");
 
-            request.user.role = UserRole.MENTOR;
-        }
+    if (data.status === MentorRequestStatus.APPROVED) {
+      // Check if mentor profile already exists
+      const existingProfile = await em.findOne(MentorProfile, {
+        mentor: request.user,
+      });
 
-        if (data.status) request.status = data.status;
-        if (data.motivation) request.motivation = data.motivation;
+      // Create new profile only if one doesn't already exist
+      if (!existingProfile) {
+        const mentorProfile = new MentorProfile();
+        mentorProfile.mentor = request.user;
+        mentorProfile.rating = 0;
+        mentorProfile.totalReviews = 0;
+        await em.persist(mentorProfile);
+      }
 
-        await em.persistAndFlush(request);
-
-        return this.toMentorRequestResponse(request);
+      request.user.role = UserRole.MENTOR;
     }
+
+    if (data.status) request.status = data.status;
+    if (data.motivation) request.motivation = data.motivation;
+
+    await em.persistAndFlush(request);
+
+    return this.toMentorRequestResponse(request);
+  }
 
   async getAllMentors() {
     const mentors = await em.findAll(MentorProfile, {
@@ -148,9 +148,9 @@ export class MentorService {
   }
 
   async deleteById(id: string) {
-    const request = await this.repo.findBecomeMentorRequestById(id);
+    const request = await this.repo.findRequestById(id);
     if (!request) throw new Error("Mentor request not found.");
-    await this.repo.removeBecomeMentorRequest(request);
+    await this.repo.removeRequest(request);
   }
 
   private toMentorRequestResponse(
@@ -197,7 +197,7 @@ export class MentorService {
       email: profile.mentor.email,
       interests: profile.mentor.interests,
       name: `${profile.mentor.firstName} ${profile.mentor.lastName}`,
-      specialization: profile.mentor.specializationTitle,
+      specialization: profile.mentor.specialization,
       bio: profile.mentor.bio,
       department: profile.mentor.department,
       rating: profile.rating,
@@ -254,6 +254,7 @@ export class MentorService {
         review.friendliness = rateRequest.friendliness;
         review.knowledge = rateRequest.knowledge;
         review.communication = rateRequest.communication;
+        // @ts-ignore
         review.comment = rateRequest.comment ?? null;
       } else {
         review = em.create(Review, {

@@ -96,7 +96,7 @@ describe("MenteeService", () => {
     // @ts-ignore
     (mockMenteeRepo.getOneRequestByMentorAndUser as jest.Mock).mockResolvedValue<null | BecomeMenteeRequest>(null);
 
-    const result = await service.becomeMentee(
+    const result = await service.createRequest(
       requestingUser,
       mentorUser.uuid,
       "Motivation message",
@@ -138,7 +138,7 @@ describe("MenteeService", () => {
     );
 
     await expect(
-      service.becomeMentee(
+      service.createRequest(
         requestingUser,
         mentorUser.uuid,
         "Motivation message",
@@ -181,7 +181,7 @@ describe("MenteeService", () => {
 
     mockMenteeRepo.getAllRequestsByUserAndStatus.mockResolvedValue([request1]);
 
-    const result = await service.getRequestsByUser("u1");
+    const result = await service.getAllRequestsByUser("u1");
 
     expect(mockMenteeRepo.getAllRequestsByUserAndStatus).toHaveBeenCalledWith(
       "u1",

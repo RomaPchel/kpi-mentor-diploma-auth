@@ -30,6 +30,7 @@ app.use(
     credentials: true,
   }),
 );
+
 app.use(koabodyparser());
 app.use(ValidationMiddleware());
 app.use(ErrorMiddleware());

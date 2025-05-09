@@ -2,14 +2,15 @@ import Router from "koa-router";
 import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { UserRole } from "../enums/UserEnums.js";
-import type {
-  CreateMentorRequest,
-  RateMentorRequest,
-  UpdateMentorRequest,
-} from "../interfaces/UserInterface.js";
+
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
 import { MentorService } from "../services/MentorService.js";
+import {
+  CreateMentorRequest,
+  RateMentorRequest,
+  UpdateMentorRequest,
+} from "../interfaces/MentorInterfaces.js";
 
 export class MentorController extends Router {
   private readonly mentorService: MentorService;
@@ -75,8 +76,7 @@ export class MentorController extends Router {
 
     const motivation = ctx.request.body as CreateMentorRequest;
 
-    const existingRequest =
-      await this.mentorService.getOneRequestByUser(user);
+    const existingRequest = await this.mentorService.getOneRequestByUser(user);
     if (existingRequest) {
       ctx.throw(400, "You already have a pending request.");
     }

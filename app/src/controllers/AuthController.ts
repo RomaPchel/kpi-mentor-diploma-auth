@@ -34,23 +34,17 @@ export class AuthController extends Router {
   }
 
   private async refresh(ctx: Context) {
-    console.log("Refreshing user...");
-    try {
-      const { refreshToken } = ctx.params;
+    const { refreshToken } = ctx.params;
 
-      const token: string | false | null =
-        await AuthenticationUtil.verifyRefreshToken(refreshToken);
-      ctx.body = { accessToken: token };
-      ctx.status = 200;
-    } catch (e) {
-      console.error(e);
-    }
+    const token: string | false | null =
+      await AuthenticationUtil.verifyRefreshToken(refreshToken);
+    ctx.body = { accessToken: token };
+    ctx.status = 200;
   }
 
   private async registration(ctx: Context) {
     const body: RegistrationRequestBody = ctx.request
       .body as RegistrationRequestBody;
-
     ctx.body = await AuthenticationUtil.register(body);
     ctx.status = 201;
   }
