@@ -2,24 +2,24 @@ import { User } from "../entities/User.js";
 import { MentorProfile } from "../entities/MentorProfile.js";
 import { em } from "../db/config.js";
 import { MentorRequestStatus, UserRole } from "../enums/UserEnums.js";
-import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { MentorRepository } from "../repositories/MentorRepository.js";
-import type {
-  BecomeMentorRequestResponse,
-  CreateMentorRequest,
-  MentorProfileResponse,
-  RateMentorRequest,
-  UpdateMentorRequest,
-} from "../interfaces/UserInterface.js";
 import { Review } from "../entities/MentorReview.js";
 import { MentorStudent } from "../entities/StudentMentor.js";
 import { UserChat } from "../entities/chat/UserChat.js";
 import { Feedback } from "../entities/Feedback.js";
+import {
+  BecomeMentorRequestBody,
+  BecomeMentorRequestResponse,
+  MentorProfileResponse,
+  RateMentorRequest,
+  UpdateMentorRequest
+} from "../interfaces/MentorInterfaces.js";
+import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 
 export class MentorService {
   private readonly repo = new MentorRepository();
 
-  async createBecomeMentorRequest(user: User, req: CreateMentorRequest) {
+  async createBecomeMentorRequest(user: User, req: BecomeMentorRequestBody) {
     const existingRequest = await em.findOne(BecomeMentorRequest, {
       user: user.uuid,
     });

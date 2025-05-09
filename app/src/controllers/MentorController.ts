@@ -7,7 +7,7 @@ import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
 import { MentorService } from "../services/MentorService.js";
 import {
-  CreateMentorRequest,
+  BecomeMentorRequestBody,
   RateMentorRequest,
   UpdateMentorRequest,
 } from "../interfaces/MentorInterfaces.js";
@@ -73,7 +73,7 @@ export class MentorController extends Router {
   private async createBecomeMentorRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user as User;
 
-    const motivation = ctx.request.body as CreateMentorRequest;
+    const motivation = ctx.request.body as BecomeMentorRequestBody;
 
     const existingRequest = await this.mentorService.getOneRequestByUser(user);
     if (existingRequest) {
