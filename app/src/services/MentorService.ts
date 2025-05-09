@@ -201,6 +201,7 @@ export class MentorService {
       bio: profile.mentor.bio,
       department: profile.mentor.department,
       rating: profile.rating,
+      isHighlighted: profile.isHighlighted,
       totalReviews: profile.totalReviews,
 
       avgFriendliness: average("friendliness"),

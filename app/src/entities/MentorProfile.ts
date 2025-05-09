@@ -18,6 +18,9 @@ export class MentorProfile extends BaseEntity {
   @Property({ default: 0 })
   totalReviews: number = 0;
 
+  @Property()
+  isHighlighted: boolean = false;
+
   @OneToMany(() => Review, (review) => review.mentor)
   reviews = new Collection<Review>(this);
 
@@ -104,17 +107,35 @@ export class MentorProfile extends BaseEntity {
     const tenureBase = Math.min(monthsSinceCreated / 24, 1);
     const tenureBonus = Math.max(tenureBase, 0.1); // minimum 0.1 for brand new mentors
 
+    const normalizedAvg = weightedReviewAvg / 6; // assuming 6 is max score
+    const wilsonLowerBound = this.wilsonScore(
+      normalizedAvg * reviews.length,
+      reviews.length,
+    );
+    const wilsonAdjustedRating = wilsonLowerBound * 6; // scale back to 0–6
     // --- Final rating (weights) ---
     const finalRating =
-      0.55 * bayesianAverage +
-      0.15 * engagementScore +
-      0.1 * activityScore +
-      0.1 * consistencyScore +
-      0.1 * tenureBonus;
+      0.45 * wilsonAdjustedRating + // slightly reduce Bayesian weight
+      0.35 * bayesianAverage +
+      0.1 * engagementScore +
+      0.05 * consistencyScore +
+      0.05 * activityScore +
+      0.01 * tenureBonus;
 
     this.rating = parseFloat(finalRating.toFixed(2));
     this.totalReviews = reviews.length;
     this.updateLevel();
+  }
+
+  wilsonScore(pos: number, n: number, z: number = 1.96): number {
+    if (n === 0) return 0;
+    const phat = pos / n;
+    const denominator = 1 + (z * z) / n;
+    const numerator =
+      phat +
+      (z * z) / (2 * n) -
+      z * Math.sqrt((phat * (1 - phat) + (z * z) / (4 * n)) / n);
+    return numerator / denominator;
   }
 
   updateLevel(): void {
