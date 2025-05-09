@@ -1,9 +1,9 @@
 import Router from "koa-router";
 import type { Context } from "koa";
 import type { User } from "../entities/User.js";
-import type { UserUpdateRequest } from "../interfaces/UserInterface.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { UserService } from "../services/UserService.js";
+import { UserUpdateRequest } from "../interfaces/UserInterface.js";
 
 export class UserController extends Router {
   private readonly userService: UserService;

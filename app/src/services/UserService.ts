@@ -1,6 +1,6 @@
 import { User } from "../entities/User.js";
 import { UserRepository } from "../repositories/UserRepository.js";
-import type {
+import {
   UserResponse,
   UserUpdateRequest,
 } from "../interfaces/UserInterface.js";
@@ -42,7 +42,7 @@ export class UserService {
   }
 
   async getAllUsers() {
-    const users = await this.repo.findAll()
+    const users = await this.repo.findAll();
     return users.map(this.toUserProfileResponse);
   }
 }

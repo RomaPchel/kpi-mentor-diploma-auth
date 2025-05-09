@@ -11,6 +11,7 @@ import { Chat } from "../entities/chat/Chat.js";
 import { ChatMessage } from "../entities/chat/ChatMessage.js";
 import { UserChat } from "../entities/chat/UserChat.js";
 import { Review } from "../entities/MentorReview.js";
+import { Feedback } from "../entities/Feedback.js";
 
 export const orm = await MikroORM.init({
   metadataProvider: TsMorphMetadataProvider,
@@ -25,6 +26,7 @@ export const orm = await MikroORM.init({
     ChatMessage,
     UserChat,
     Review,
+    Feedback,
   ],
   dbName: "diploma",
   host: "localhost",
