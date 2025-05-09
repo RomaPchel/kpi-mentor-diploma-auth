@@ -50,11 +50,18 @@ export class MenteeService {
 
     const student = await em.findOneOrFail(User, { uuid: req.user.uuid });
 
-    const relation = em.create(MentorStudent, {
+    const existingRelation = await em.findOne(MentorStudent, {
       student,
-      mentor: mentor,
+      mentor,
     });
-    em.persist(relation);
+
+    if (!existingRelation) {
+      const relation = em.create(MentorStudent, {
+        student,
+        mentor,
+      });
+      em.persist(relation);
+    }
 
     await findOrCreateChatBetween(student, mentor);
 

@@ -37,7 +37,6 @@ export class MentorProfile extends BaseEntity {
     const now = new Date();
     const decayMonths = 6;
 
-    // --- Time-decayed review weighting ---
     const reviewWeights = reviews.map((review) => {
       const ageInMonths =
         (now.getTime() - review.createdAt.getTime()) /

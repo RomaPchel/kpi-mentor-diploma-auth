@@ -250,14 +250,13 @@ export class MentorService {
       const mentor = await em.findOne(
         MentorProfile,
         { mentor: uuid },
-        { populate: ["mentor", "reviews"] }, // Make sure reviews are loaded
+        { populate: ["mentor", "reviews"] },
       );
 
       if (!mentor) {
         throw new Error("Mentor not found");
       }
 
-      // Check for existing review
       let review = await em.findOne(Review, {
         mentor,
         reviewer,
