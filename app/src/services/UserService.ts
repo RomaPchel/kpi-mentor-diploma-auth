@@ -1,14 +1,11 @@
 import { User } from "../entities/User.js";
 import { UserRepository } from "../repositories/UserRepository.js";
-import {
-  UserResponse,
-  UserUpdateRequest,
-} from "../interfaces/UserInterface.js";
+import { UserProfileUpdateRequest } from "../interfaces/UserInterface.js";
 
 export class UserService {
   private readonly repo = new UserRepository();
 
-  async updateUser(user: User, data: UserUpdateRequest) {
+  async updateUser(user: User, data: UserProfileUpdateRequest) {
     user.firstName = data.firstName ?? user.firstName;
     user.lastName = data.lastName ?? user.lastName;
     user.email = data.email ?? user.email;
@@ -25,7 +22,7 @@ export class UserService {
     return this.toUserProfileResponse(user);
   }
 
-  private toUserProfileResponse(user: User): UserResponse {
+  private toUserProfileResponse(user: User) {
     return {
       id: user.uuid,
       firstName: user.firstName,

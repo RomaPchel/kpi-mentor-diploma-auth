@@ -5,7 +5,7 @@ import { findOrCreateChatBetween } from "../controllers/ChatController.js";
 import { MenteeRepository } from "../repositories/MenteeRepository.js";
 import { UserRepository } from "../repositories/UserRepository.js";
 import type { BecomeMenteeRequestResponse } from "../interfaces/UserInterface";
-import { em } from "db/config.js";
+import { em, orm } from "db/config.js";
 import { MentorStudent } from "entities/StudentMentor.js";
 
 export class MenteeService {
@@ -21,58 +21,57 @@ export class MenteeService {
     return await this.repo.getAllMenteesByUser(userUuid);
   }
 
-    async getMentorsForStudent(student: User) {
-        const menteeRelations = await em.find(MentorStudent, {
-            student: student,
-        });
+  async getMentorsForStudent(student: User) {
+    const menteeRelations = await em.find(MentorStudent, {
+      student: student,
+    });
 
-        return (
-            menteeRelations.map((rel) => {
-                const mentor = rel.mentor;
-                return {
-                    uuid: mentor.uuid,
-                    name: `${mentor.firstName} ${mentor.lastName}`,
-                    avatar: mentor.avatar,
-                    department: mentor.department,
-                    interests: mentor.interests,
-                };
-            }) ?? []
-        );
-    }
+    return (
+      menteeRelations.map((rel) => {
+        const mentor = rel.mentor;
+        return {
+          uuid: mentor.uuid,
+          name: `${mentor.firstName} ${mentor.lastName}`,
+          avatar: mentor.avatar,
+          department: mentor.department,
+          interests: mentor.interests,
+        };
+      }) ?? []
+    );
+  }
 
-
-    async approveRequest(uuid: string, mentor: User) {
+  async approveRequest(uuid: string, mentor: User) {
     const req = await this.repo.getOneRequestByMentorAndUser(uuid, mentor.uuid);
 
-    req.status = MentorRequestStatus.APPROVED;
-    req.processedAt = new Date();
-    await this.repo.save(req);
+    req!.status = MentorRequestStatus.APPROVED;
+    req!.processedAt = new Date();
+    await this.repo.save(req!);
 
-      const student = await em.findOneOrFail(User, { uuid: req.user.uuid });
+    const student = await em.findOneOrFail(User, { uuid: req!.user.uuid });
 
-      const existingRelation = await em.findOne(MentorStudent, {
-          student,
-          mentor,
+    const existingRelation = await em.findOne(MentorStudent, {
+      student,
+      mentor,
+    });
+
+    if (!existingRelation) {
+      const relation = em.create(MentorStudent, {
+        student,
+        mentor,
       });
+      em.persist(relation);
+    }
+    const user = await em.findOne(User, { uuid: uuid });
 
-      if (!existingRelation) {
-          const relation = em.create(MentorStudent, {
-              student,
-              mentor,
-          });
-          em.persist(relation);
-      }
-
-    const foundUser = await this.userRepo.getUserById(mentor.uuid);
-    await findOrCreateChatBetween(foundUser as User, mentor);
+    await findOrCreateChatBetween(user!, mentor);
   }
 
   async rejectRequest(uuid: string, userUuid: string) {
     const req = await this.repo.getOneRequestByMentorAndUser(uuid, userUuid);
 
-    req.status = MentorRequestStatus.REJECTED;
-    req.processedAt = new Date();
-    await this.repo.save(req);
+    req!.status = MentorRequestStatus.REJECTED;
+    req!.processedAt = new Date();
+    await this.repo.save(req!);
   }
 
   async getRequestsByUser(userUuid: string) {
@@ -83,20 +82,18 @@ export class MenteeService {
       "DESC",
     );
 
-    return {
-      requests: requests.map(this.toMenteeRequestResponse),
-    };
+    return requests.map(this.toMenteeRequestResponse);
   }
 
   private toMenteeRequestResponse(
     request: BecomeMenteeRequest,
   ): BecomeMenteeRequestResponse {
     return {
-      id: request.uuid,
+      uuid: request.uuid,
       motivation: request.motivation ?? "",
       status: request.status,
       createdAt: request.createdAt,
-      user: {
+      mentee: {
         uuid: request.user.uuid,
         name: `${request.user.firstName} ${request.user.lastName}`,
         email: request.user.email,
@@ -112,6 +109,19 @@ export class MenteeService {
         mentor: mentorUuid,
         user: userUuid,
         status: MentorRequestStatus.PENDING,
+      },
+      {
+        orderBy: { createdAt: "DESC" },
+      },
+    );
+  }
+
+  async getAlreadyRequested(mentorUuid: string, userUuid: string) {
+    return await em.findOne(
+      BecomeMenteeRequest,
+      {
+        mentor: mentorUuid,
+        user: userUuid,
       },
       {
         orderBy: { createdAt: "DESC" },
@@ -142,6 +152,8 @@ export class MenteeService {
     request.mentor = mentor;
     request.motivation = motivation;
     request.status = MentorRequestStatus.PENDING;
+
+    await this.repo.save(request);
 
     return this.toMenteeRequestResponse(request);
   }

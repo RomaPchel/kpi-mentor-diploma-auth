@@ -3,10 +3,14 @@ import { BecomeMentorRequest } from "../entities/BecomeMentorRequest.js";
 import { MentorProfile } from "../entities/MentorProfile.js";
 import { User } from "../entities/User.js";
 import { MentorStudent } from "../entities/StudentMentor.js";
+import { MentorRequestStatus } from "../enums/UserEnums.js";
 
 export class MentorRepository {
   async findRequestByUser(userUuid: string) {
-    return em.findOne(BecomeMentorRequest, { user: userUuid });
+    return em.findOne(BecomeMentorRequest, {
+      user: userUuid,
+      status: MentorRequestStatus.PENDING,
+    });
   }
 
   async findRequestById(id: string) {
@@ -20,13 +24,13 @@ export class MentorRepository {
   async findMentorProfileByUser(user: User) {
     return em.findOne(MentorProfile, {
       mentor: user,
-    })
+    });
   }
 
   async findMentorStudentsByUser(user: User) {
     return em.find(MentorStudent, {
       mentor: user,
-    })
+    });
   }
 
   async findAllRequests() {
@@ -50,7 +54,9 @@ export class MentorRepository {
   }
 
   async findAllMentorProfiles(where: any) {
-    return await em.find(MentorProfile, where, { populate: ["mentor", "reviews.reviewer"] });
+    return await em.find(MentorProfile, where, {
+      populate: ["mentor", "reviews.reviewer"],
+    });
   }
 
   async findMentorProfileById(uuid: string) {

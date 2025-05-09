@@ -7,8 +7,9 @@ import { MentorRequestStatus } from "../enums/UserEnums.js";
  * Repository for managing operations related to mentees, mentors, and mentee requests.
  */
 export class MenteeRepository {
-  async getOneRequestByMentorAndUser(mentorUuid: string, userUuid: string) {
-    return await em.findOneOrFail(BecomeMenteeRequest, {
+  async getOneRequestByMentorAndUser(userUuid: string, mentorUuid: string) {
+    console.log(userUuid, mentorUuid);
+    return await em.findOne(BecomeMenteeRequest, {
       mentor: mentorUuid,
       user: userUuid,
     });
@@ -35,6 +36,6 @@ export class MenteeRepository {
   }
 
   async getAllMenteesByUser(userUuid: string) {
-    return await em.find(MentorStudent, {mentor: userUuid});
+    return await em.find(MentorStudent, { mentor: userUuid });
   }
 }

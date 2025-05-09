@@ -8,7 +8,6 @@ import type {
 } from "../interfaces/EventInterfaces.js";
 import { EventRepository } from "../repositories/EventRepository.js";
 import { UserRepository } from "../repositories/UserRepository.js";
-import { HttpError } from "../errors/HttpError.js";
 
 export class EventService {
   private readonly repo: EventRepository;
@@ -40,7 +39,7 @@ export class EventService {
   async getEventById(eventId: string) {
     const event = await this.repo.findById(eventId);
     if (!event) {
-      throw new HttpError("EVENT_DOES_NOT_EXIST", 404)
+      throw new Error("EVENT_DOES_NOT_EXIST");
     }
     return this.toEventResponse(event);
   }
@@ -82,10 +81,9 @@ export class EventService {
       };
     }
     if (filters?.users?.length) {
+      // @ts-ignore
       const usersArray = JSON.parse(filters.users);
-      where.$or = [
-        { participants: { uuid: { $in: usersArray } } },
-      ];
+      where.$or = [{ participants: { uuid: { $in: usersArray } } }];
     }
     const events = await this.repo.findAll(where);
 
@@ -113,19 +111,19 @@ export class EventService {
       return 0;
     });
 
-
     return result;
   }
 
   async updateEvent(eventId: string, updateData: Partial<UpdateEventRequest>) {
     const event = await this.repo.findById(eventId);
     if (!event) {
-      throw new HttpError("EVENT_DOES_NOT_EXIST", 404);
+      throw new Error("EVENT_DOES_NOT_EXIST");
     }
 
     if (updateData.url) event.url = updateData.url;
     if (updateData.status) event.status = updateData.status;
-    if (updateData.timestamp) event.timestamp = new Date(Number(updateData.timestamp));
+    if (updateData.timestamp)
+      event.timestamp = new Date(Number(updateData.timestamp));
 
     if (updateData.participants) {
       const participantUsers = await this.userRepository.getAllUsersByIds(
@@ -153,7 +151,7 @@ export class EventService {
         id: user.uuid,
         name: `${user.firstName} ${user.lastName}`,
       })),
-      createdAt: event.createdAt
+      createdAt: event.createdAt,
     };
   }
 }

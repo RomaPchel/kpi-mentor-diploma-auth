@@ -17,7 +17,7 @@ export class MenteeController extends Router {
 
   private setUpRoutes() {
     this.get(
-      "/mentee-requests",
+      "/requests",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
       this.getMentorMenteeRequests.bind(this),
@@ -28,7 +28,7 @@ export class MenteeController extends Router {
       this.getMentorMenteeRequest.bind(this),
     );
     this.get(
-      "/mentees",
+      "/",
       AuthMiddleware(),
       roleMiddleware(UserRole.MENTOR),
       this.getYourMentees.bind(this),
@@ -51,6 +51,11 @@ export class MenteeController extends Router {
       this.becomeMentee.bind(this),
     );
     this.get("/my-mentors", AuthMiddleware(), this.getMyMentors.bind(this));
+    this.get(
+      "/already-requested/:uuid",
+      AuthMiddleware(),
+      this.getAlreadyRequested.bind(this),
+    );
   }
 
   private async getMyMentors(ctx: Context): Promise<void> {
@@ -81,6 +86,23 @@ export class MenteeController extends Router {
       user.uuid,
     );
 
+    console.log("ASDSDASD");
+    if (!request) {
+      ctx.throw(400, "No request");
+    }
+
+    ctx.body = request;
+    ctx.status = 200;
+  }
+
+  private async getAlreadyRequested(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    const request = await this.menteeService.getAlreadyRequested(
+      ctx.params.uuid as string,
+      user.uuid,
+    );
+
+    console.log("ASDSDASD");
     if (!request) {
       ctx.throw(400, "No request");
     }
@@ -91,7 +113,7 @@ export class MenteeController extends Router {
 
   private async approveMenteeRequest(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-
+    console.log(ctx.params.uuid);
     ctx.body = await this.menteeService.approveRequest(
       ctx.params.uuid as string,
       user,

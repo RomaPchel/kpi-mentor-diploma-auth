@@ -28,7 +28,6 @@ export class ChatController extends Router {
   private async getChats(ctx: Context) {
     try {
       const user: User = ctx.state.user as User;
-      console.log("User requesting chats:", user.uuid);
 
       const userChats = await em.find(
         UserChat,
@@ -46,19 +45,17 @@ export class ChatController extends Router {
 
       console.log(`Found ${userChats.length} chats for user ${user.uuid}`);
 
-      console.log(userChats);
-
       userChats.sort((a, b) => {
-        if (a.chat.messages.length === 0 && b.chat.messages.length > 0) {
+        if (a.chat.messages?.length === 0 && b.chat.messages?.length > 0) {
           return -1;
         }
-        if (b.chat.messages.length === 0 && a.chat.messages.length > 0) {
+        if (b.chat.messages?.length === 0 && a.chat.messages?.length > 0) {
           return 1;
         }
 
         return (
-          a.chat.messages[a.chat.messages.length - 1].createdAt.getTime() -
-          b.chat.messages[b.chat.messages.length - 1].createdAt.getTime()
+          a.chat.messages[a.chat.messages?.length - 1]?.createdAt.getTime() -
+          b.chat.messages[b.chat.messages?.length - 1]?.createdAt.getTime()
         );
       });
 
@@ -304,6 +301,7 @@ export async function findOrCreateChatBetween(user1: User, user2: User) {
     .where({ "uc1.user": user1, "uc2.user": user2 })
     .getSingleResult();
 
+  console.log(chat);
   if (chat) {
     return chat;
   }
@@ -311,6 +309,7 @@ export async function findOrCreateChatBetween(user1: User, user2: User) {
   const newChat = new Chat();
   const userChat1 = new UserChat(user1, newChat);
   const userChat2 = new UserChat(user2, newChat);
+  console.log(newChat);
 
   em.persist([newChat, userChat1, userChat2]);
   await em.flush();

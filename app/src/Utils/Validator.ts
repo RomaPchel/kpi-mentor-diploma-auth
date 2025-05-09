@@ -200,7 +200,6 @@ export class Validator {
     if (!hit) {
       return;
     }
-    console.log(ctx.request.query);
     hit.schema.parse(ctx.request.query);
   }
 
