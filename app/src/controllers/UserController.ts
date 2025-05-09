@@ -6,27 +6,27 @@ import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { UserService } from "../services/UserService.js";
 
 export class UserController extends Router {
-  private readonly userService: UserService;
+    private readonly userService: UserService;
 
-  constructor() {
-    super({ prefix: "/api/users" });
-    this.userService = new UserService();
-    this.setUpRoutes();
-  }
-
-  private setUpRoutes() {
-    this.put("/", AuthMiddleware(), this.updateUserInfo);
-  }
-
-  private async updateUserInfo(ctx: Context): Promise<void> {
-    try {
-      const user: User = ctx.state.user as User;
-      const data = ctx.request.body as UserProfileUpdateRequest;
-
-      ctx.body = await this.userService.updateUser(user, data);
-      ctx.status = 201;
-    } catch (e) {
-      console.error(e);
+    constructor() {
+        super({ prefix: "/api/users" });
+        this.userService = new UserService();
+        this.setUpRoutes();
     }
-  }
+
+    private setUpRoutes() {
+        this.put("/", AuthMiddleware(), this.updateUserInfo);
+    }
+
+    private async updateUserInfo(ctx: Context): Promise<void> {
+        try {
+            const user: User = ctx.state.user as User;
+            const data = ctx.request.body as UserProfileUpdateRequest;
+
+            ctx.body = await this.userService.updateUser(user, data);
+            ctx.status = 201;
+        } catch (e) {
+            console.error(e);
+        }
+    }
 }

@@ -1,11 +1,16 @@
 import { FormsOfEducation, type MentorRequestStatus } from "../enums/UserEnums";
+import type { Review } from "../entities/MentorReview.js";
 
 export interface CreateMentorRequest {
   motivation: string;
 }
 
 export interface RateMentorRequest {
-  rating: number;
+  mentorUuid: string;
+  friendliness: number;
+  knowledge: number;
+  communication: number;
+  comment?: string;
 }
 
 export interface UpdateMentorRequest {
@@ -36,19 +41,20 @@ export interface UserProfileResponse {
   bio?: string;
   specializationCode: number;
   specializationTitle: string;
-  formOfEducation: string;
+  formOfEducation?: string;
   groupCode: string;
   department: string;
   interests: string[];
 }
 
 export interface BecomeMentorRequestResponse {
-  id: string;
+  uuid: string;
   motivation: string;
   status: MentorRequestStatus;
   createdAt: Date;
   user: {
     uuid: string;
+    avatar: string;
     name: string;
     email: string;
   };
@@ -78,4 +84,5 @@ export interface MentorProfileResponse {
   bio: string;
   rating: number;
   totalReviews: number;
+  reviews: Review[];
 }

@@ -30,10 +30,9 @@ app.use(
     credentials: true,
   }),
 );
-
-app.use(ErrorMiddleware());
-app.use(ValidationMiddleware());
 app.use(koabodyparser());
+app.use(ValidationMiddleware());
+app.use(ErrorMiddleware());
 
 await orm.connect().then(() => {
   console.log("Database has connected!");
@@ -41,7 +40,6 @@ await orm.connect().then(() => {
 SocketSingleton.getInstance(server);
 console.log("Socket instance initialized");
 
-app.use(ValidationMiddleware());
 app
   .use(new AuthController().routes())
   .use(new AuthController().allowedMethods());

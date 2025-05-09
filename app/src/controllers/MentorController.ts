@@ -26,7 +26,11 @@ export class MentorController extends Router {
       AuthMiddleware(),
       this.createBecomeMentorRequest.bind(this),
     );
-
+    this.post(
+      "/:uuid/report",
+      AuthMiddleware(),
+      this.createFeedback.bind(this),
+    );
     this.get(
       "/become-mentor-request",
       AuthMiddleware(),
@@ -61,8 +65,9 @@ export class MentorController extends Router {
     );
 
     this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
-    this.get("/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
-    this.put("/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
+    this.get("/profile/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
+    this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
+    this.put("/rate/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
   }
 
   private async createBecomeMentorRequest(ctx: Context): Promise<void> {
@@ -81,6 +86,28 @@ export class MentorController extends Router {
       motivation,
     );
     ctx.status = 200;
+  }
+
+  private async createFeedback(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
+    const mentorUuid = ctx.params.uuid;
+    console.log(ctx.request.body);
+    const { message, anonymous } = ctx.request.body as {
+      message: string;
+      anonymous?: boolean;
+    };
+
+    if (!message || typeof message !== "string") {
+      ctx.throw(400, "Feedback message is required.");
+    }
+
+    ctx.body = await this.mentorService.createFeedback(
+      user,
+      mentorUuid,
+      message,
+      !!anonymous,
+    );
+    ctx.status = 201;
   }
 
   private async getOwnBecomeMentorRequest(ctx: Context): Promise<void> {
@@ -110,11 +137,6 @@ export class MentorController extends Router {
   }
 
   private async updateBecomeMentorRequest(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user as User;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
-
     const id = ctx.params.id;
 
     const request = ctx.request.body as UpdateMentorRequest;
@@ -136,57 +158,29 @@ export class MentorController extends Router {
   }
 
   private async getAllMentors(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
+    try {
+      console.log(await this.mentorService.getAllMentors());
+      ctx.body = await this.mentorService.getAllMentors();
+      ctx.status = 200;
+    } catch (e) {
+      console.error(e);
     }
-
-    const {
-      name,
-      minRating,
-      maxRating,
-      minReviews,
-      maxReviews,
-      sortBy,
-      sortOrder,
-    } = ctx.query;
-
-    const filters: Record<string, any> = {};
-
-    if (name !== undefined) filters.name = name;
-    if (minRating !== undefined) filters.minRating = Number(minRating);
-    if (maxRating !== undefined) filters.maxRating = Number(maxRating);
-    if (minReviews !== undefined) filters.minReviews = Number(minReviews);
-    if (maxReviews !== undefined) filters.maxReviews = Number(maxReviews);
-
-    const sorting: Record<string, any> = {};
-
-    if (sortBy !== undefined) sorting.sortBy = sortBy;
-    if (sortOrder !== undefined) sorting.sortOrder = sortOrder;
-
-    ctx.body = await this.mentorService.getAllMentors(filters, sorting);
-    ctx.status = 200;
   }
 
   private async getOneMentor(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
     const uuid = ctx.params.uuid;
+
     ctx.body = await this.mentorService.getOneMentor(uuid);
     ctx.status = 200;
   }
 
   private async rateMentor(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
-    if (!user) {
-      ctx.throw(401, "Unauthorized");
-    }
+
     const uuid = ctx.params.uuid;
     const rateRequest = ctx.request.body as RateMentorRequest;
 
-    await this.mentorService.rateMentor(uuid, rateRequest);
+    await this.mentorService.rateMentor(uuid, user, rateRequest);
     ctx.status = 200;
   }
 }
