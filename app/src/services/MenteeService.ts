@@ -5,7 +5,7 @@ import { findOrCreateChatBetween } from "../controllers/ChatController.js";
 import { MenteeRepository } from "../repositories/MenteeRepository.js";
 import { UserRepository } from "../repositories/UserRepository.js";
 import type { BecomeMenteeRequestResponse } from "../interfaces/UserInterface";
-import { em, orm } from "db/config.js";
+import { em } from "db/config.js";
 import { MentorStudent } from "entities/StudentMentor.js";
 
 export class MenteeService {
