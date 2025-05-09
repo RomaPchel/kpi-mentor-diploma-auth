@@ -52,16 +52,14 @@ export class EventController extends Router {
   }
 
   private async getAllEvents(ctx: Context): Promise<void> {
-    const user: User = ctx.state.user as User;
-
-    const { userIds, status, minTimestamp, maxTimeStamp, sortBy, sortOrder } =
+    const { users, status, owner, minTimestamp, maxTimeStamp, sortBy, sortOrder } =
       ctx.query;
 
     const filters: Record<string, any> = {};
 
-    if (userIds !== undefined)
-      filters.userIds = Array.isArray(userIds) ? userIds : [userIds];
-
+    if (users !== undefined)
+      filters.users = users;
+    if (owner !== undefined) filters.owner = owner;
     if (status !== undefined) filters.status = status;
     if (minTimestamp !== undefined) filters.minTimestamp = minTimestamp;
     if (maxTimeStamp !== undefined) filters.maxTimeStamp = maxTimeStamp;

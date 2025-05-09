@@ -48,14 +48,7 @@ export const CreateEventSchema = z.object({
           },
         ),
     )
-    .min(1, { message: "PARTICIPANTS_CAN_NOT_BE_EMPTY" })
     .optional()
-    .refine(
-      (value) => value !== undefined && value !== null && value.length > 0,
-      {
-        message: "PARTICIPANTS_CAN_NOT_BE_EMPTY",
-      },
-    ),
 });
 
 export const UpdateEventSchema = z.object({

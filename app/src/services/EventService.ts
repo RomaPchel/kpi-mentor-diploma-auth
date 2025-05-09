@@ -28,9 +28,7 @@ export class EventService {
     event.status = EventStatus.PLANNED;
 
     const users = await this.userRepository.getAllUsersByIds(participants);
-    if (users.length == 0) {
-      throw new HttpError("USERS_DOES_NOT_EXIST", 404)
-    }
+
     event.participants.set(users);
     event.timestamp = new Date(Number(timestamp));
 
@@ -49,13 +47,14 @@ export class EventService {
 
   async getAllEvents(
     filters: {
-      userIds?: string[];
+      users?: string[];
+      owner?: string;
       status?: EventStatus;
       minTimestamp?: string;
       maxTimeStamp?: string;
     },
     sorting: {
-      sortBy?: "status";
+      sortBy?: "status" | "timestamp";
       sortOrder?: "asc" | "desc";
     },
   ) {
@@ -63,6 +62,10 @@ export class EventService {
 
     if (filters?.status) {
       where.status = filters.status;
+    }
+
+    if (filters?.owner) {
+      where.owner = { uuid: filters.owner };
     }
 
     if (filters?.minTimestamp) {
@@ -78,19 +81,17 @@ export class EventService {
         $lte: new Date(filters.maxTimeStamp),
       };
     }
-
-    if (filters?.userIds?.length) {
+    if (filters?.users?.length) {
+      const usersArray = JSON.parse(filters.users);
       where.$or = [
-        { owner: { uuid: { $in: filters.userIds } } },
-        { participants: { uuid: { $in: filters.userIds } } },
+        { participants: { uuid: { $in: usersArray } } },
       ];
     }
-
     const events = await this.repo.findAll(where);
 
     let result = events.map((event) => this.toEventResponse(event));
 
-    const sortBy = sorting.sortBy ?? "timestamp";
+    const sortBy = sorting.sortBy ?? "createdAt";
     const sortOrder = sorting.sortOrder !== "asc" ? -1 : 1;
 
     result = result.sort((a, b) => {
@@ -102,6 +103,9 @@ export class EventService {
       } else if (sortBy === "timestamp") {
         aValue = new Date(a.timestamp).getTime();
         bValue = new Date(b.timestamp).getTime();
+      } else {
+        aValue = new Date(a.createdAt).getTime();
+        bValue = new Date(b.createdAt).getTime();
       }
 
       if (aValue < bValue) return -1 * sortOrder;
@@ -149,6 +153,7 @@ export class EventService {
         id: user.uuid,
         name: `${user.firstName} ${user.lastName}`,
       })),
+      createdAt: event.createdAt
     };
   }
 }
