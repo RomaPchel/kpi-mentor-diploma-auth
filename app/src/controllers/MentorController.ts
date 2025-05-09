@@ -67,7 +67,6 @@ export class MentorController extends Router {
 
     this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
     this.get("/profile/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
-    this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
     this.put("/rate/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
   }
 
@@ -91,7 +90,7 @@ export class MentorController extends Router {
   private async createFeedback(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
     const mentorUuid = ctx.params.uuid;
-    console.log(ctx.request.body);
+
     const { message, anonymous } = ctx.request.body as {
       message: string;
       anonymous?: boolean;

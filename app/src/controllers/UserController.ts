@@ -3,7 +3,7 @@ import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { UserService } from "../services/UserService.js";
-import { UserUpdateRequest } from "../interfaces/UserInterface.js";
+import { UserProfileUpdateRequest } from "../interfaces/UserInterface.js";
 
 export class UserController extends Router {
   private readonly userService: UserService;
@@ -22,7 +22,7 @@ export class UserController extends Router {
   private async updateUser(ctx: Context): Promise<void> {
     try {
       const user: User = ctx.state.user as User;
-      const data = ctx.request.body as UserUpdateRequest;
+      const data = ctx.request.body as UserProfileUpdateRequest;
 
       ctx.body = await this.userService.updateUser(user, data);
       ctx.status = 201;

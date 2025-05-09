@@ -9,7 +9,6 @@ import { em } from "../db/config.js";
 import { compare } from "bcrypt";
 import jwt, { type JwtPayload, type VerifyErrors } from "jsonwebtoken";
 import { FormsOfEducation, TokenExpiration } from "../enums/UserEnums.js";
-import { HttpError } from "../errors/HttpError.js";
 
 export class AuthenticationUtil {
   public static readonly ACCESS_SECRET = process.env
@@ -24,7 +23,7 @@ export class AuthenticationUtil {
     });
 
     if (existingUser) {
-      throw new HttpError("USER_ALREADY_EXISTS", 400);
+      throw new Error("USER_ALREADY_EXISTS");
     }
 
     const newUser: User = new User();
@@ -77,11 +76,11 @@ export class AuthenticationUtil {
     });
 
     if (!existingUser) {
-      throw new HttpError("USER_DOES_NOT_EXIST", 404);
+      throw new Error("USER_DOES_NOT_EXIST");
     }
 
     if (!(await this.comparePasswords(body.password, existingUser.password))) {
-      throw new HttpError("PASSWORDS_DO_NOT_MATCH", 400);
+      throw new Error("PASSWORDS_DO_NOT_MATCH");
     }
 
     return this.buildTokens(existingUser as User);

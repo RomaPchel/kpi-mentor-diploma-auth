@@ -27,7 +27,6 @@ export class AuthController extends Router {
   }
 
   private async login(ctx: Context) {
-    console.log(ctx.request.body);
     const body: LoginRequestBody = ctx.request.body as LoginRequestBody;
     ctx.body = await AuthenticationUtil.login(body);
     ctx.status = 200;

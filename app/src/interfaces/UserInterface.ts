@@ -25,7 +25,7 @@ export interface UserProfileUpdateRequest {
   avatar?: string;
   bio?: string;
   specializationCode?: number;
-  specializationTitle?: string;
+  specialization?: string;
   formOfEducation?: FormsOfEducation;
   groupCode?: string;
   department?: string;
@@ -61,11 +61,11 @@ export interface BecomeMentorRequestResponse {
 }
 
 export interface BecomeMenteeRequestResponse {
-  id: string;
+  uuid: string;
   motivation: string;
   status: MentorRequestStatus;
   createdAt: Date;
-  user: {
+  mentee: {
     uuid: string;
     name: string;
     email: string;
