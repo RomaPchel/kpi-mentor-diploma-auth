@@ -91,6 +91,18 @@ export const GetAllEventsQuerySchema = z.object({
       },
     })
     .optional(),
+  minCreatedAt: z
+    .string()
+    .refine((value) => /^\d{13}$/.test(value), {
+      message: "MIN_CREATED_MUST_BE_VALID",
+    })
+    .optional(),
+  maxCreatedAt: z
+    .string()
+    .refine((value) => /^\d{13}$/.test(value), {
+      message: "MAX_CREATED_MUST_BE_VALID",
+    })
+    .optional(),
   minTimestamp: z
     .string()
     .refine((value) => /^\d{13}$/.test(value), {
@@ -105,7 +117,7 @@ export const GetAllEventsQuerySchema = z.object({
     .optional(),
   sortBy: z
     .string()
-    .refine((value) => value && value === "status", {
+    .refine((value) => value && value === "status" || value === "timestamp" || value === "createdAt", {
       message: "SORT_BY_MUST_BE_VALID",
     })
     .optional(),

@@ -50,6 +50,8 @@ export class EventService {
       users?: string[];
       owner?: string;
       status?: EventStatus;
+      minCreatedAt?: string;
+      maxCreatedAt?: string;
       minTimestamp?: string;
       maxTimeStamp?: string;
     },
@@ -68,17 +70,30 @@ export class EventService {
       where.owner = { uuid: filters.owner };
     }
 
+    if (filters?.minCreatedAt) {
+      where.createdAt = {
+        ...(where.createdAt || {}),
+        $gte: new Date(Number(filters.minCreatedAt)),
+      };
+    }
+
+    if (filters?.maxCreatedAt) {
+      where.createdAt = {
+        ...(where.createdAt || {}),
+        $lte: new Date(Number(filters.maxCreatedAt)),
+      };
+    }
     if (filters?.minTimestamp) {
       where.timestamp = {
         ...(where.timestamp || {}),
-        $gte: new Date(filters.minTimestamp),
+        $gte: new Date(Number(filters.minTimestamp)),
       };
     }
 
     if (filters?.maxTimeStamp) {
       where.timestamp = {
         ...(where.timestamp || {}),
-        $lte: new Date(filters.maxTimeStamp),
+        $lte: new Date(Number(filters.maxTimeStamp)),
       };
     }
     if (filters?.users?.length) {
@@ -87,6 +102,7 @@ export class EventService {
         { participants: { uuid: { $in: usersArray } } },
       ];
     }
+
     const events = await this.repo.findAll(where);
 
     let result = events.map((event) => this.toEventResponse(event));
