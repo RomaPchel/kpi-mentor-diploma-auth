@@ -13,12 +13,10 @@ import { EventController } from "./controllers/EventController.js";
 import { SpecialityController } from "./controllers/SpecialityController.js";
 import { MentorController } from "./controllers/MentorController.js";
 import { MenteeController } from "./controllers/MenteeController.js";
-import { MentorProfile } from "./entities/MentorProfile.js";
-import { Badge } from "./enums/UserEnums.js";
 
 const app = new Koa();
 const server: HTTPServer = createServer(app.callback());
-
+await orm.getSchemaGenerator().updateSchema();
 app.use(
   cors({
     origin: (ctx) => {
@@ -68,18 +66,3 @@ app
 server.listen(3000, () => {
   console.log(`Auth server is running on port 3000`);
 });
-const mentorUuid = "9dd5c6cf-1222-410c-a06d-1f54c056bc1d";
-const mentorProfile = await em.findOne(MentorProfile, {
-  uuid: mentorUuid,
-});
-
-if (!mentorProfile) {
-  throw new Error(`MentorProfile not found for mentor UUID: ${mentorUuid}`);
-}
-
-mentorProfile.badges = [
-  Badge.WithPhoto,
-  Badge.CompleteProfile,
-  Badge.StarMentor,
-];
-await em.persistAndFlush(mentorProfile);
