@@ -52,7 +52,7 @@ export class EventController extends Router {
   }
 
   private async getAllEvents(ctx: Context): Promise<void> {
-    const { users, status, owner, minTimestamp, maxTimeStamp, sortBy, sortOrder } =
+    const { users, status, owner, minCreatedAt, maxCreatedAt, minTimestamp, maxTimeStamp, sortBy, sortOrder } =
       ctx.query;
 
     const filters: Record<string, any> = {};
@@ -61,6 +61,8 @@ export class EventController extends Router {
       filters.users = users;
     if (owner !== undefined) filters.owner = owner;
     if (status !== undefined) filters.status = status;
+    if (minCreatedAt !== undefined) filters.minCreatedAt = minCreatedAt;
+    if (maxCreatedAt !== undefined) filters.maxCreatedAt = maxCreatedAt;
     if (minTimestamp !== undefined) filters.minTimestamp = minTimestamp;
     if (maxTimeStamp !== undefined) filters.maxTimeStamp = maxTimeStamp;
 

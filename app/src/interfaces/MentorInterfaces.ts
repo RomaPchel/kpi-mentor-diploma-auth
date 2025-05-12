@@ -1,5 +1,5 @@
-import { ReviewResponse } from "./ReviewInterfaces";
-import type { MentorRequestStatus } from "../enums/UserEnums";
+import type { MentorRequestStatus } from "../enums/UserEnums.js";
+import type { Review } from "../entities/MentorReview.js";
 
 export interface MentorProfileResponse {
   uuid: string;
@@ -12,13 +12,10 @@ export interface MentorProfileResponse {
   bio: string;
   rating: number;
   totalReviews: number;
-  reviews: ReviewResponse[];
-  avgFriendliness: number;
-  avgKnowledge: number;
-  avgCommunication: number;
+  reviews: Review[];
 }
 
-export interface MentorRequestResponse {
+export interface BecomeMentorRequestResponse {
   uuid: string;
   motivation: string;
   status: MentorRequestStatus;
@@ -31,7 +28,15 @@ export interface MentorRequestResponse {
   };
 }
 
-export interface CreateMentorRequest {
+export interface RateMentorRequest {
+  mentorUuid: string;
+  friendliness: number;
+  knowledge: number;
+  communication: number;
+  comment?: string;
+}
+
+export interface BecomeMentorRequestBody {
   motivation: string;
 }
 
