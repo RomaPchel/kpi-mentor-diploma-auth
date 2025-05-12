@@ -19,7 +19,6 @@ export class MenteeController extends Router {
     this.get(
       "/requests",
       AuthMiddleware(),
-      roleMiddleware(UserRole.MENTOR),
       this.getMentorMenteeRequests.bind(this),
     );
     this.get(
@@ -102,6 +101,7 @@ export class MenteeController extends Router {
       user.uuid,
     );
 
+    console.log(request);
     console.log("ASDSDASD");
     if (!request) {
       ctx.throw(400, "No request");

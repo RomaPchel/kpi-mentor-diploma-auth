@@ -16,6 +16,21 @@ export const LoginRequestSchema = z.object({
     .min(8, { message: "PASSWORD_MUST_BE_AT_LEAST_8_CHARACTERS_LONG" }),
 });
 
+export const RateMentorSchema = z.object({
+  friendliness: z.number().refine((val) => !isNaN(Number(val)), {
+    message: "RATING_MUST_BE_VALID",
+  }),
+  knowledge: z.number().refine((val) => !isNaN(Number(val)), {
+    message: "RATING_MUST_BE_VALID",
+  }),
+  communication: z.number().refine((val) => !isNaN(Number(val)), {
+    message: "RATING_MUST_BE_VALID",
+  }),
+  message: z
+    .string()
+    .min(20, { message: "MESSAGE_SHOULD_BE_AT_LEAST_20_CHARACTERS_LONG" }),
+});
+
 export const CreateEventSchema = z.object({
   url: z
     .string()
@@ -48,7 +63,7 @@ export const CreateEventSchema = z.object({
           },
         ),
     )
-    .optional()
+    .optional(),
 });
 
 export const UpdateEventSchema = z.object({
@@ -162,15 +177,6 @@ export const MentorRequestIdSchema = z.object({
 export const UpdateMentorRequestSchema = z.object({
   motivation: z.string().min(1, "MOTIVATION_CANNOT_BE_EMPTY").optional(),
   status: z.nativeEnum(MentorRequestStatus).optional(),
-});
-
-export const RateMentorSchema = z.object({
-  rating: z
-    .number()
-    .optional()
-    .refine(val => !isNaN(Number(val)), {
-      message: "RATING_MUST_BE_VALID",
-    }),
 });
 
 export const GetAllMentorsQuerySchema = z.object({

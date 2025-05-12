@@ -18,6 +18,9 @@ export class MentorProfile extends BaseEntity {
   @Property({ default: 0 })
   totalReviews: number = 0;
 
+  @Property()
+  isHighlighted: boolean = false;
+
   @OneToMany(() => Review, (review) => review.mentor)
   reviews = new Collection<Review>(this);
 
@@ -55,14 +58,12 @@ export class MentorProfile extends BaseEntity {
       reviewWeights.reduce((sum, r) => sum + r.avgScore * r.decayWeight, 0) /
       (totalWeight || 1);
 
-    // --- Bayesian Smoothing ---
-    const priorMean = 5.5; // Increased from 4.0
+    const priorMean = 5.5;
     const priorWeight = 3;
     const bayesianAverage =
       (priorMean * priorWeight + weightedReviewAvg * reviews.length) /
       (priorWeight + reviews.length);
 
-    // --- Engagement score ---
     const chats = await em.find(UserChat, { user: this.uuid });
     const maxSessions = 50;
     const engagementScore = Math.min(
@@ -70,7 +71,6 @@ export class MentorProfile extends BaseEntity {
       1,
     );
 
-    // --- Consistency score ---
     const allScores = reviews.map(
       (r) => (r.friendliness + r.knowledge + r.communication) / 3,
     );
@@ -81,7 +81,6 @@ export class MentorProfile extends BaseEntity {
     );
     const consistencyScore = 1 - Math.min(stdDev / 2, 1); // tighter scale
 
-    // --- Activity score ---
     const mentorMessages = await em.find(ChatMessage, {
       sender: this.mentor,
     });
@@ -97,24 +96,40 @@ export class MentorProfile extends BaseEntity {
         chats.length > 0 ? 1 : 0,
       ].reduce((a, b) => a + b, 0) / 3;
 
-    // --- Tenure bonus ---
     const created = this.createdAt ?? new Date();
     const monthsSinceCreated =
       (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30);
     const tenureBase = Math.min(monthsSinceCreated / 24, 1);
-    const tenureBonus = Math.max(tenureBase, 0.1); // minimum 0.1 for brand new mentors
+    const tenureBonus = Math.max(tenureBase, 0.1);
 
-    // --- Final rating (weights) ---
+    const normalizedAvg = weightedReviewAvg / 6;
+    const wilsonLowerBound = this.wilsonScore(
+      normalizedAvg * reviews.length,
+      reviews.length,
+    );
+    const wilsonAdjustedRating = wilsonLowerBound * 6;
     const finalRating =
-      0.55 * bayesianAverage +
-      0.15 * engagementScore +
-      0.1 * activityScore +
-      0.1 * consistencyScore +
-      0.1 * tenureBonus;
+      0.45 * wilsonAdjustedRating +
+      0.35 * bayesianAverage +
+      0.1 * engagementScore +
+      0.05 * consistencyScore +
+      0.05 * activityScore +
+      0.01 * tenureBonus;
 
     this.rating = parseFloat(finalRating.toFixed(2));
     this.totalReviews = reviews.length;
     this.updateLevel();
+  }
+
+  wilsonScore(pos: number, n: number, z: number = 1.96): number {
+    if (n === 0) return 0;
+    const phat = pos / n;
+    const denominator = 1 + (z * z) / n;
+    const numerator =
+      phat +
+      (z * z) / (2 * n) -
+      z * Math.sqrt((phat * (1 - phat) + (z * z) / (4 * n)) / n);
+    return numerator / denominator;
   }
 
   updateLevel(): void {

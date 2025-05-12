@@ -6,6 +6,7 @@ import { MentorRepository } from "../repositories/MentorRepository.js";
 import { Review } from "../entities/MentorReview.js";
 import { MentorStudent } from "../entities/StudentMentor.js";
 import { UserChat } from "../entities/chat/UserChat.js";
+import { Report } from "../entities/Report.js";
 import { Feedback } from "../entities/Feedback.js";
 import {
   BecomeMentorRequestBody,
@@ -60,7 +61,26 @@ export class MentorService {
     return this.toMentorRequestResponse(request);
   }
 
-  async createFeedback(
+  async createFeedback(user: User, message: string) {
+    const alreadyReported = await em.findOne(Feedback, {
+      user,
+    });
+
+    if (alreadyReported) {
+      console.log("You have already submitted a report for this mentor.");
+      return alreadyReported;
+    }
+
+    const feedback = em.create(Feedback, {
+      user,
+      message,
+    });
+
+    await em.persistAndFlush(feedback);
+    return feedback;
+  }
+
+  async createReport(
     user: User,
     mentorUuid: string,
     message: string,
@@ -70,7 +90,7 @@ export class MentorService {
       mentor: mentorUuid,
     });
 
-    const alreadyReported = await em.findOne(Feedback, {
+    const alreadyReported = await em.findOne(Report, {
       mentor,
       author: user,
     });
@@ -79,7 +99,7 @@ export class MentorService {
       throw new Error("You have already submitted a report for this mentor.");
     }
 
-    const feedback = em.create(Feedback, {
+    const feedback = em.create(Report, {
       author: user,
       mentor,
       message,
@@ -147,6 +167,22 @@ export class MentorService {
     return await this.toMentorProfileResponse(mentor as MentorProfile);
   }
 
+  async getAllReports() {
+    return await em.find(
+      Report,
+      { reviewedByAdmin: false },
+      { populate: ["mentor.mentor", "author"] },
+    );
+  }
+
+  async getAllFeedbacks() {
+    return await em.find(
+      Feedback,
+      { reviewedByAdmin: false },
+      { populate: ["user"] },
+    );
+  }
+
   async deleteById(id: string) {
     const request = await this.repo.findRequestById(id);
     if (!request) throw new Error("Mentor request not found.");
@@ -201,6 +237,7 @@ export class MentorService {
       bio: profile.mentor.bio,
       department: profile.mentor.department,
       rating: profile.rating,
+      isHighlighted: profile.isHighlighted,
       totalReviews: profile.totalReviews,
 
       avgFriendliness: average("friendliness"),
