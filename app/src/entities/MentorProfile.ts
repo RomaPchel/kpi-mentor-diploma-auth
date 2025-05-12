@@ -6,6 +6,7 @@ import { Review } from "./MentorReview.js";
 import { em } from "../db/config.js";
 import { UserChat } from "./chat/UserChat.js";
 import { ChatMessage } from "./chat/ChatMessage.js";
+import { Badge } from "../enums/UserEnums.js";
 
 @Entity()
 export class MentorProfile extends BaseEntity {
@@ -21,11 +22,54 @@ export class MentorProfile extends BaseEntity {
   @Property()
   isHighlighted: boolean = false;
 
+  @Property({ type: "jsonb", nullable: true })
+  badges: string[] = [];
+
   @OneToMany(() => Review, (review) => review.mentor)
   reviews = new Collection<Review>(this);
 
   @Property({ default: 1 })
   level: number = 1;
+
+  updateBadges(): void {
+    const badges: Badge[] = [];
+
+    if (this.rating >= 4.8 && this.totalReviews >= 30) {
+      badges.push(Badge.StarMentor);
+    }
+
+    if (this.totalReviews >= 50) {
+      badges.push(Badge.ExperiencedMentor);
+    }
+
+    if (this.level === 4) {
+      badges.push(Badge.CommunityLeader);
+    }
+
+    if (this.reviews.getItems().length >= 5) {
+      const recent = this.reviews.getItems().slice(-5);
+      const avgRecent =
+        recent.reduce(
+          (sum, r) =>
+            sum + (r.friendliness + r.knowledge + r.communication) / 3,
+          0,
+        ) / 5;
+
+      if (avgRecent >= 4.5) {
+        badges.push(Badge.TrustedMentor);
+      }
+    }
+
+    if (this.mentor.bio?.length > 150) {
+      badges.push(Badge.CompleteProfile);
+    }
+
+    if (this.mentor.avatar) {
+      badges.push(Badge.WithPhoto);
+    }
+
+    this.badges = badges;
+  }
 
   async updateRating(): Promise<void> {
     const reviews = this.reviews.getItems();
@@ -118,7 +162,9 @@ export class MentorProfile extends BaseEntity {
 
     this.rating = parseFloat(finalRating.toFixed(2));
     this.totalReviews = reviews.length;
+
     this.updateLevel();
+    this.updateBadges();
   }
 
   wilsonScore(pos: number, n: number, z: number = 1.96): number {

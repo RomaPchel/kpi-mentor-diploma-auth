@@ -117,7 +117,6 @@ export class MenteeService {
   }
 
   async getAlreadyRequested(mentorUuid: string, userUuid: string) {
-    console.log(mentorUuid, userUuid);
     return await em.findOne(
       BecomeMenteeRequest,
       {
@@ -132,20 +131,19 @@ export class MenteeService {
 
   async becomeMentee(
     requestingUser: User,
-    userUuid: string,
+    mentorUuid: string,
     motivation: string,
   ) {
-    const mentor = await this.userRepo.getUserById(userUuid);
+    const mentor = await this.userRepo.getUserById(mentorUuid);
 
+    console.log(mentorUuid, requestingUser.uuid);
     const req = await this.repo.getOneRequestByMentorAndUser(
-      userUuid,
       requestingUser.uuid,
+      mentorUuid,
     );
 
     if (req) {
-      throw new Error(
-        "You have already requested to become a mentee for this mentor.",
-      );
+      return this.toMenteeRequestResponse(req);
     }
 
     const request = new BecomeMenteeRequest();

@@ -128,7 +128,7 @@ export class MentorController extends Router {
   private async createReport(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
     const mentorUuid = ctx.params.uuid;
-
+    console.log(mentorUuid);
     const { message, anonymous } = ctx.request.body as {
       message: string;
       anonymous?: boolean;

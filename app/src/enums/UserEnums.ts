@@ -19,3 +19,12 @@ export enum MentorRequestStatus {
   APPROVED = "approved",
   REJECTED = "rejected",
 }
+
+export enum Badge {
+  StarMentor = "Зірковий ментор ⭐",
+  ExperiencedMentor = "Наставник з досвідом 🏅",
+  CommunityLeader = "Лідер спільноти 👑",
+  TrustedMentor = "Надійний ментор ✅",
+  CompleteProfile = "Повний профіль 📘",
+  WithPhoto = "З фото 📷",
+}

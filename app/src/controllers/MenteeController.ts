@@ -101,8 +101,7 @@ export class MenteeController extends Router {
       user.uuid,
     );
 
-    console.log(request);
-    console.log("ASDSDASD");
+    console.log(!!request);
     if (!request) {
       ctx.throw(400, "No request");
     }

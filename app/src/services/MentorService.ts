@@ -74,6 +74,7 @@ export class MentorService {
     const feedback = em.create(Feedback, {
       user,
       message,
+      reviewedByAdmin: false,
     });
 
     await em.persistAndFlush(feedback);
@@ -96,7 +97,8 @@ export class MentorService {
     });
 
     if (alreadyReported) {
-      throw new Error("You have already submitted a report for this mentor.");
+      console.log("You have already submitted a report for this mentor.");
+      return alreadyReported;
     }
 
     const feedback = em.create(Report, {
@@ -239,7 +241,7 @@ export class MentorService {
       rating: profile.rating,
       isHighlighted: profile.isHighlighted,
       totalReviews: profile.totalReviews,
-
+      badges: profile.badges,
       avgFriendliness: average("friendliness"),
       avgKnowledge: average("knowledge"),
       avgCommunication: average("communication"),
