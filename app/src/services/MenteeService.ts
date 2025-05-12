@@ -117,6 +117,7 @@ export class MenteeService {
   }
 
   async getAlreadyRequested(mentorUuid: string, userUuid: string) {
+    console.log(mentorUuid, userUuid);
     return await em.findOne(
       BecomeMenteeRequest,
       {

@@ -58,14 +58,12 @@ export class MentorProfile extends BaseEntity {
       reviewWeights.reduce((sum, r) => sum + r.avgScore * r.decayWeight, 0) /
       (totalWeight || 1);
 
-    // --- Bayesian Smoothing ---
-    const priorMean = 5.5; // Increased from 4.0
+    const priorMean = 5.5;
     const priorWeight = 3;
     const bayesianAverage =
       (priorMean * priorWeight + weightedReviewAvg * reviews.length) /
       (priorWeight + reviews.length);
 
-    // --- Engagement score ---
     const chats = await em.find(UserChat, { user: this.uuid });
     const maxSessions = 50;
     const engagementScore = Math.min(
@@ -73,7 +71,6 @@ export class MentorProfile extends BaseEntity {
       1,
     );
 
-    // --- Consistency score ---
     const allScores = reviews.map(
       (r) => (r.friendliness + r.knowledge + r.communication) / 3,
     );
@@ -84,7 +81,6 @@ export class MentorProfile extends BaseEntity {
     );
     const consistencyScore = 1 - Math.min(stdDev / 2, 1); // tighter scale
 
-    // --- Activity score ---
     const mentorMessages = await em.find(ChatMessage, {
       sender: this.mentor,
     });
@@ -100,22 +96,20 @@ export class MentorProfile extends BaseEntity {
         chats.length > 0 ? 1 : 0,
       ].reduce((a, b) => a + b, 0) / 3;
 
-    // --- Tenure bonus ---
     const created = this.createdAt ?? new Date();
     const monthsSinceCreated =
       (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30);
     const tenureBase = Math.min(monthsSinceCreated / 24, 1);
-    const tenureBonus = Math.max(tenureBase, 0.1); // minimum 0.1 for brand new mentors
+    const tenureBonus = Math.max(tenureBase, 0.1);
 
-    const normalizedAvg = weightedReviewAvg / 6; // assuming 6 is max score
+    const normalizedAvg = weightedReviewAvg / 6;
     const wilsonLowerBound = this.wilsonScore(
       normalizedAvg * reviews.length,
       reviews.length,
     );
-    const wilsonAdjustedRating = wilsonLowerBound * 6; // scale back to 0–6
-    // --- Final rating (weights) ---
+    const wilsonAdjustedRating = wilsonLowerBound * 6;
     const finalRating =
-      0.45 * wilsonAdjustedRating + // slightly reduce Bayesian weight
+      0.45 * wilsonAdjustedRating +
       0.35 * bayesianAverage +
       0.1 * engagementScore +
       0.05 * consistencyScore +

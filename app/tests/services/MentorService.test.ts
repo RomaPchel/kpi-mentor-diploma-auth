@@ -45,11 +45,9 @@ describe("MentorService", () => {
 
     mockRepo.findRequestByUser.mockResolvedValue(null);
 
-    const result = await service.createRequest(user, requestDto);
+    const result = await service.createBecomeMentorRequest(user, requestDto);
 
-    expect(mockRepo.findRequestByUser).toHaveBeenCalledWith(
-      user.uuid,
-    );
+    expect(mockRepo.findRequestByUser).toHaveBeenCalledWith(user.uuid);
     expect(mockRepo.saveRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         user,
@@ -79,7 +77,7 @@ describe("MentorService", () => {
     mockRepo.findRequestByUser.mockResolvedValue(existingRequest);
 
     await expect(
-      service.createRequest(user, { motivation: "Again" }),
+      service.createBecomeMentorRequest(user, { motivation: "Again" }),
     ).rejects.toThrow("You already have a pending request.");
   });
 
@@ -142,10 +140,7 @@ describe("MentorService", () => {
     request2.uuid = "request-2";
     request2.user = user;
 
-    mockRepo.findAllRequests.mockResolvedValue([
-      request1,
-      request2,
-    ]);
+    mockRepo.findAllRequests.mockResolvedValue([request1, request2]);
 
     const result = await service.getAllRequests();
     expect(result.length).toBe(2);
@@ -164,7 +159,7 @@ describe("MentorService", () => {
     mockRepo.findRequestById.mockResolvedValue(request);
 
     const result = await service.getOneRequestById(user, "request-id");
-    expect(result.id).toBe("request-id");
+    expect(result.uuid).toBe("request-id");
   });
 
   it("should return one request by User", async () => {
@@ -185,7 +180,9 @@ describe("MentorService", () => {
   it("should throw if mentor is not found", async () => {
     mockRepo.findMentorProfileById.mockResolvedValue(null);
 
-    await expect(service.getMentorById("not-found")).rejects.toThrow("Mentor not found");
+    await expect(service.getOneMentor("not-found")).rejects.toThrow(
+      "Mentor not found",
+    );
   });
 
   it("should delete mentor request by id", async () => {
@@ -202,7 +199,9 @@ describe("MentorService", () => {
   it("should throw if mentor request is not found", async () => {
     mockRepo.findRequestById.mockResolvedValue(null);
 
-    await expect(service.deleteById("invalid-id")).rejects.toThrow("Mentor request not found.");
+    await expect(service.deleteById("invalid-id")).rejects.toThrow(
+      "Mentor request not found.",
+    );
   });
 
   it("should rate a mentor with no previous rating", async () => {
@@ -212,7 +211,7 @@ describe("MentorService", () => {
     mentor.totalReviews = 0;
     mockRepo.findMentorProfileById.mockResolvedValue(mentor);
 
-    await service.rateMentor("mentor-id", { rating: 5 });
+    await service.rateMentor(mentor.uuid, { rating: 5 });
 
     expect(mentor.rating).toBe(5);
     expect(mentor.totalReviews).toBe(1);
@@ -237,10 +236,10 @@ describe("MentorService", () => {
   it("should throw if mentor is not found when rating", async () => {
     mockRepo.findMentorProfileById.mockResolvedValue(null);
 
-    await expect(service.rateMentor("invalid-id", { rating: 5 })).rejects.toThrow("Mentor not found");
+    await expect(
+      service.rateMentor("invalid-id", { rating: 5 }),
+    ).rejects.toThrow("Mentor not found");
   });
-
-
 
   it("should return mentor profile by uuid", async () => {
     const user = new User();
@@ -251,7 +250,7 @@ describe("MentorService", () => {
     mentor.mentor = user;
     mockRepo.findMentorProfileById.mockResolvedValue(mentor);
 
-    const result = await service.getMentorById("mentor-uuid");
+    const result = await service.getOneMentor("mentor-uuid");
 
     expect(mockRepo.findMentorProfileById).toHaveBeenCalledWith("mentor-uuid");
     expect(result.uuid).toBe("mentor-uuid");

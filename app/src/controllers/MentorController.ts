@@ -2,7 +2,7 @@ import Router from "koa-router";
 import type { Context } from "koa";
 import type { User } from "../entities/User.js";
 import { UserRole } from "../enums/UserEnums.js";
-
+import { Report } from "../entities/Report.js";
 import { AuthMiddleware } from "../middlewares/AuthMiddleware.js";
 import { roleMiddleware } from "../middlewares/RolesMiddleware.js";
 import { MentorService } from "../services/MentorService.js";
@@ -11,6 +11,8 @@ import {
   RateMentorRequest,
   UpdateMentorRequest,
 } from "../interfaces/MentorInterfaces.js";
+import { em } from "../db/config.js";
+import { Feedback } from "../entities/Feedback.js";
 
 export class MentorController extends Router {
   private readonly mentorService: MentorService;
@@ -27,11 +29,19 @@ export class MentorController extends Router {
       AuthMiddleware(),
       this.createBecomeMentorRequest.bind(this),
     );
-    this.post(
+    this.post("/feedback", AuthMiddleware(), this.createFeedback.bind(this));
+    this.post("/:uuid/report", AuthMiddleware(), this.createReport.bind(this));
+    this.put(
       "/:uuid/report",
       AuthMiddleware(),
-      this.createFeedback.bind(this),
+      this.markReportReviewed.bind(this),
     );
+    this.put(
+      "/:uuid/feedback",
+      AuthMiddleware(),
+      this.markFeedbackReviewed.bind(this),
+    );
+
     this.get(
       "/become-mentor-request",
       AuthMiddleware(),
@@ -68,6 +78,18 @@ export class MentorController extends Router {
     this.get("/", AuthMiddleware(), this.getAllMentors.bind(this));
     this.get("/profile/:uuid", AuthMiddleware(), this.getOneMentor.bind(this));
     this.put("/rate/:uuid", AuthMiddleware(), this.rateMentor.bind(this));
+    this.get(
+      "/feedbacks",
+      AuthMiddleware(),
+      roleMiddleware(UserRole.ADMIN),
+      this.getAllFeedbacks.bind(this),
+    );
+    this.get(
+      "/reports",
+      AuthMiddleware(),
+      roleMiddleware(UserRole.ADMIN),
+      this.getAllReports.bind(this),
+    );
   }
 
   private async createBecomeMentorRequest(ctx: Context): Promise<void> {
@@ -89,6 +111,22 @@ export class MentorController extends Router {
 
   private async createFeedback(ctx: Context): Promise<void> {
     const user: User = ctx.state.user;
+
+    const { message } = ctx.request.body as {
+      message: string;
+      anonymous?: boolean;
+    };
+
+    if (!message || typeof message !== "string") {
+      ctx.throw(400, "Report message is required.");
+    }
+    console.log(message);
+    ctx.body = await this.mentorService.createFeedback(user, message);
+    ctx.status = 201;
+  }
+
+  private async createReport(ctx: Context): Promise<void> {
+    const user: User = ctx.state.user;
     const mentorUuid = ctx.params.uuid;
 
     const { message, anonymous } = ctx.request.body as {
@@ -97,15 +135,54 @@ export class MentorController extends Router {
     };
 
     if (!message || typeof message !== "string") {
-      ctx.throw(400, "Feedback message is required.");
+      ctx.throw(400, "Report message is required.");
     }
 
-    ctx.body = await this.mentorService.createFeedback(
+    ctx.body = await this.mentorService.createReport(
       user,
       mentorUuid,
       message,
       !!anonymous,
     );
+    ctx.status = 201;
+  }
+
+  private async markReportReviewed(ctx: Context): Promise<void> {
+    console.log("ASDASDASDASDAS");
+
+    const reportUuid = ctx.params.uuid;
+    if (!reportUuid) {
+      ctx.throw(400, "Missing report UUID");
+    }
+
+    const report = await em.findOne(Report, { uuid: reportUuid });
+
+    if (!report) {
+      ctx.throw(404, "Report not found");
+    }
+
+    report.reviewedByAdmin = true;
+    await em.flush();
+
+    ctx.status = 201;
+  }
+
+  private async markFeedbackReviewed(ctx: Context): Promise<void> {
+    const feedbackUuid = ctx.params.uuid;
+
+    if (!feedbackUuid) {
+      ctx.throw(400, "Missing report UUID");
+    }
+
+    const report = await em.findOne(Feedback, { uuid: feedbackUuid });
+
+    if (!report) {
+      ctx.throw(404, "Report not found");
+    }
+
+    report.reviewedByAdmin = true;
+    await em.flush();
+
     ctx.status = 201;
   }
 
@@ -164,6 +241,16 @@ export class MentorController extends Router {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  private async getAllReports(ctx: Context): Promise<void> {
+    ctx.body = await this.mentorService.getAllReports();
+    ctx.status = 200;
+  }
+
+  private async getAllFeedbacks(ctx: Context): Promise<void> {
+    ctx.body = await this.mentorService.getAllFeedbacks();
+    ctx.status = 200;
   }
 
   private async getOneMentor(ctx: Context): Promise<void> {

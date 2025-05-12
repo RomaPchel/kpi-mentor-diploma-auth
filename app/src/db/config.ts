@@ -11,6 +11,7 @@ import { Chat } from "../entities/chat/Chat.js";
 import { ChatMessage } from "../entities/chat/ChatMessage.js";
 import { UserChat } from "../entities/chat/UserChat.js";
 import { Review } from "../entities/MentorReview.js";
+import { Report } from "../entities/Report.js";
 import { Feedback } from "../entities/Feedback.js";
 
 export const orm = await MikroORM.init({
@@ -26,6 +27,7 @@ export const orm = await MikroORM.init({
     ChatMessage,
     UserChat,
     Review,
+    Report,
     Feedback,
   ],
   dbName: "diploma",
