@@ -1,5 +1,5 @@
 import Koa from "koa";
-import { em, orm } from "./db/config.js";
+import { orm } from "./db/config.js";
 import koabodyparser from "koa-bodyparser";
 import { AuthController } from "./controllers/AuthController.js";
 import cors from "@koa/cors";
