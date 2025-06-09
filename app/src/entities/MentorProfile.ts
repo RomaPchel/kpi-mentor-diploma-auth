@@ -7,7 +7,10 @@ import { em } from "../db/config.js";
 import { UserChat } from "./chat/UserChat.js";
 import { ChatMessage } from "./chat/ChatMessage.js";
 import { Badge } from "../enums/UserEnums.js";
-
+type ReviewContext = {
+  allReviewsByUser: Review[];
+  allReviewsForMentor: Review[];
+};
 @Entity()
 export class MentorProfile extends BaseEntity {
   @OneToOne(() => User, { owner: true })
@@ -74,7 +77,7 @@ export class MentorProfile extends BaseEntity {
   async updateRating(): Promise<void> {
     const reviews = this.reviews.getItems();
 
-    if (reviews.length === 0) {
+    if (!reviews.length) {
       this.rating = 0;
       this.totalReviews = 0;
       this.level = 1;
@@ -84,7 +87,8 @@ export class MentorProfile extends BaseEntity {
     const now = new Date();
     const decayMonths = 6;
 
-    const reviewWeights = reviews.map((review) => {
+    // --- Time-decayed average of reviews
+    const reviewStats = reviews.map((review) => {
       const ageInMonths =
         (now.getTime() - review.createdAt.getTime()) /
         (1000 * 60 * 60 * 24 * 30);
@@ -94,71 +98,69 @@ export class MentorProfile extends BaseEntity {
       return { decayWeight, avgScore };
     });
 
-    const totalWeight = reviewWeights.reduce(
-      (sum, r) => sum + r.decayWeight,
-      0,
-    );
-    const weightedReviewAvg =
-      reviewWeights.reduce((sum, r) => sum + r.avgScore * r.decayWeight, 0) /
+    const totalWeight = reviewStats.reduce((sum, r) => sum + r.decayWeight, 0);
+    const weightedAvg =
+      reviewStats.reduce((sum, r) => sum + r.avgScore * r.decayWeight, 0) /
       (totalWeight || 1);
 
+    // --- Bayesian Average
     const priorMean = 5.5;
     const priorWeight = 3;
     const bayesianAverage =
-      (priorMean * priorWeight + weightedReviewAvg * reviews.length) /
+      (priorMean * priorWeight + weightedAvg * reviews.length) /
       (priorWeight + reviews.length);
 
+    // --- Engagement Score (log-normalized)
     const chats = await em.find(UserChat, { user: this.uuid });
-    const maxSessions = 50;
     const engagementScore = Math.min(
-      Math.log(1 + chats.length) / Math.log(1 + maxSessions),
+      Math.log1p(chats.length) / Math.log1p(50),
       1,
     );
 
-    const allScores = reviews.map(
-      (r) => (r.friendliness + r.knowledge + r.communication) / 3,
-    );
-    const mean = allScores.reduce((a, b) => a + b, 0) / allScores.length;
-    const stdDev = Math.sqrt(
-      allScores.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
-        allScores.length,
-    );
-    const consistencyScore = 1 - Math.min(stdDev / 2, 1); // tighter scale
+    // --- Consistency Score (standard deviation)
+    const allScores = reviewStats.map((r) => r.avgScore);
+    const mean = allScores.reduce((sum, s) => sum + s, 0) / allScores.length;
+    const variance =
+      allScores.reduce((sum, s) => sum + Math.pow(s - mean, 2), 0) /
+      allScores.length;
+    const stdDev = Math.sqrt(variance);
+    const consistencyScore = 1 - Math.min(stdDev / 2, 1);
 
-    const mentorMessages = await em.find(ChatMessage, {
-      sender: this.mentor,
-    });
-    const profileCompleted =
+    // --- Activity Score (binary indicators)
+    const mentorMessages = await em.find(ChatMessage, { sender: this.mentor });
+    const profileCompleted = Boolean(
       this.mentor.avatar &&
-      this.mentor.interests &&
-      this.mentor.department &&
-      this.mentor.bio;
+        this.mentor.interests &&
+        this.mentor.department &&
+        this.mentor.bio,
+    );
     const activityScore =
-      [
-        profileCompleted ? 1 : 0,
-        mentorMessages.length > 0 ? 1 : 0,
-        chats.length > 0 ? 1 : 0,
-      ].reduce((a, b) => a + b, 0) / 3;
+      [profileCompleted, mentorMessages.length > 0, chats.length > 0].filter(
+        Boolean,
+      ).length / 3;
 
+    // --- Tenure Score
     const created = this.createdAt ?? new Date();
     const monthsSinceCreated =
       (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 30);
-    const tenureBase = Math.min(monthsSinceCreated / 24, 1);
-    const tenureBonus = Math.max(tenureBase, 0.1);
+    const tenureBonus = Math.max(Math.min(monthsSinceCreated / 24, 1), 0.1);
 
-    const normalizedAvg = weightedReviewAvg / 6;
+    // --- Wilson Lower Bound (confidence-adjusted lower bound)
+    const normalizedAvg = weightedAvg / 6;
     const wilsonLowerBound = this.wilsonScore(
       normalizedAvg * reviews.length,
       reviews.length,
     );
-    const wilsonAdjustedRating = wilsonLowerBound * 6;
+    const wilsonAdjusted = wilsonLowerBound * 6;
+
+    // --- Final Composite Rating
     const finalRating =
-      0.45 * wilsonAdjustedRating +
+      0.45 * wilsonAdjusted +
       0.35 * bayesianAverage +
-      0.1 * engagementScore +
-      0.05 * consistencyScore +
-      0.05 * activityScore +
-      0.01 * tenureBonus;
+      0.1 * engagementScore * 6 +
+      0.05 * consistencyScore * 6 +
+      0.05 * activityScore * 6 +
+      0.01 * tenureBonus * 6;
 
     this.rating = parseFloat(finalRating.toFixed(2));
     this.totalReviews = reviews.length;
@@ -202,5 +204,38 @@ export class MentorProfile extends BaseEntity {
       default:
         return "Новий ментор";
     }
+  }
+
+  isReviewSuspicious(review: Review, context: ReviewContext) {
+    const now = new Date();
+
+    // 1. Всі оцінки максимальні або мінімальні — підозріло
+    const scores = [
+      review.friendliness,
+      review.knowledge,
+      review.communication,
+    ];
+    const allMax = scores.every((score) => score === 6);
+    const allMin = scores.every((score) => score === 1);
+    if (allMax || allMin) return true;
+
+    // 2. Відгук залишено менше ніж через 1 годину після створення
+    const reviewAgeMins =
+      (now.getTime() - review.createdAt.getTime()) / (1000 * 60);
+    if (reviewAgeMins < 60) return true;
+
+    // 3. Один користувач залишив кілька відгуків одному ментору
+    const duplicates = context.allReviewsByUser.filter(
+      (r) => r.mentor === review.mentor,
+    );
+    if (duplicates.length > 1) return true;
+
+    // 4. Всі оцінки від користувача одному ментору в той самий день
+    const sameDayReviews = context.allReviewsByUser.filter((r) => {
+      const d1 = r.createdAt.toDateString();
+      const d2 = review.createdAt.toDateString();
+      return r.mentor === review.mentor && d1 === d2;
+    });
+    return sameDayReviews.length > 1;
   }
 }
